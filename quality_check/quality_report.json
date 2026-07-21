@@ -1,0 +1,399 @@
+{
+  "metadata": {
+    "dataset": "NBA Shot Locations 1997 - 2020.csv",
+    "total_rows": 4729512,
+    "mode": "FULL",
+    "timestamp": "2026-07-21T20:33:27.708813"
+  },
+  "D1_completeness": {
+    "Game ID": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Game Event ID": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Player ID": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Team ID": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Period": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Minutes Remaining": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Seconds Remaining": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Shot Distance": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "X Location": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Y Location": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Shot Made Flag": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Game Date": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Player Name": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Team Name": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Action Type": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Shot Type": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Shot Zone Basic": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Shot Zone Area": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Shot Zone Range": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Home Team": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Away Team": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Season Type": {
+      "missing_count": 0,
+      "missing_pct": 0.0,
+      "severity": "PASS"
+    }
+  },
+  "D2_format_type": {
+    "int_col_type_errors": {},
+    "date_format_issues": 0,
+    "date_format_examples": [],
+    "date_format_total_checked": 500
+  },
+  "D3_range_plausibility": {
+    "Period": {
+      "out_of_range_count": 0,
+      "out_of_range_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Minutes Remaining": {
+      "out_of_range_count": 0,
+      "out_of_range_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Seconds Remaining": {
+      "out_of_range_count": 0,
+      "out_of_range_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Shot Distance": {
+      "out_of_range_count": 0,
+      "out_of_range_pct": 0.0,
+      "severity": "PASS"
+    },
+    "X Location": {
+      "out_of_range_count": 0,
+      "out_of_range_pct": 0.0,
+      "severity": "PASS"
+    },
+    "Y Location": {
+      "out_of_range_count": 0,
+      "out_of_range_pct": 0.0,
+      "severity": "PASS"
+    },
+    "enum_issues": {},
+    "shot_made_flag_invalid": []
+  },
+  "D4_spatial_consistency": {
+    "coordinate_scale_analysis": {
+      "median_ratio": 10.4,
+      "mean_ratio": 10.81,
+      "std_ratio": 1.19,
+      "interpretation": "X/Y 坐标单位约为 1/10 ft; 即 10 个坐标单位 ≈ 1 英尺"
+    },
+    "distance_correlation_check": {
+      "pearson_r": 0.9994,
+      "severity": "PASS"
+    },
+    "spatial_outlier_count": 100,
+    "spatial_outlier_samples": [
+      {
+        "x": -10.0,
+        "y": -12.0,
+        "shot_distance": 1.0,
+        "euclidean": 15.620499351813308,
+        "ratio": 15.620499351813308,
+        "median_ratio": 10.330644811541156
+      },
+      {
+        "x": 10.0,
+        "y": 12.0,
+        "shot_distance": 1.0,
+        "euclidean": 15.620499351813308,
+        "ratio": 15.620499351813308,
+        "median_ratio": 10.330644811541156
+      },
+      {
+        "x": 5.0,
+        "y": 18.0,
+        "shot_distance": 1.0,
+        "euclidean": 18.681541692269406,
+        "ratio": 18.681541692269406,
+        "median_ratio": 10.330644811541156
+      },
+      {
+        "x": -14.0,
+        "y": 10.0,
+        "shot_distance": 1.0,
+        "euclidean": 17.204650534085253,
+        "ratio": 17.204650534085253,
+        "median_ratio": 10.330644811541156
+      },
+      {
+        "x": 8.0,
+        "y": 16.0,
+        "shot_distance": 1.0,
+        "euclidean": 17.88854381999832,
+        "ratio": 17.88854381999832,
+        "median_ratio": 10.330644811541156
+      },
+      {
+        "x": 12.0,
+        "y": 12.0,
+        "shot_distance": 1.0,
+        "euclidean": 16.97056274847714,
+        "ratio": 16.97056274847714,
+        "median_ratio": 10.330644811541156
+      },
+      {
+        "x": -16.0,
+        "y": 10.0,
+        "shot_distance": 1.0,
+        "euclidean": 18.867962264113206,
+        "ratio": 18.867962264113206,
+        "median_ratio": 10.330644811541156
+      },
+      {
+        "x": 18.0,
+        "y": -3.0,
+        "shot_distance": 1.0,
+        "euclidean": 18.24828759089466,
+        "ratio": 18.24828759089466,
+        "median_ratio": 10.330644811541156
+      },
+      {
+        "x": -14.0,
+        "y": 10.0,
+        "shot_distance": 1.0,
+        "euclidean": 17.204650534085253,
+        "ratio": 17.204650534085253,
+        "median_ratio": 10.330644811541156
+      },
+      {
+        "x": 5.0,
+        "y": 18.0,
+        "shot_distance": 1.0,
+        "euclidean": 18.681541692269406,
+        "ratio": 18.681541692269406,
+        "median_ratio": 10.330644811541156
+      }
+    ],
+    "court_boundary_violations": 0
+  },
+  "D5_temporal_consistency": {
+    "overtime_time_issues": [],
+    "season_coverage": {
+      "seasons_found": 24,
+      "season_range": "1997–2020",
+      "records_per_season": {
+        "1997": 67378,
+        "1998": 132679,
+        "1999": 192966,
+        "2000": 207042,
+        "2001": 203598,
+        "2002": 206262,
+        "2003": 206041,
+        "2004": 198638,
+        "2005": 211255,
+        "2006": 211956,
+        "2007": 209716,
+        "2008": 216066,
+        "2009": 213151,
+        "2010": 214428,
+        "2011": 143454,
+        "2012": 240387,
+        "2013": 217660,
+        "2014": 220742,
+        "2015": 221434,
+        "2016": 226068,
+        "2017": 229529,
+        "2018": 230109,
+        "2019": 225949,
+        "2020": 83004
+      }
+    },
+    "game_date_range": {
+      "sample_min": "19971031",
+      "sample_max": "19980416"
+    }
+  },
+  "D6_business_logic": {
+    "3PT_without_3_in_zone": {
+      "count": 11141,
+      "pct": 0.236,
+      "severity": "WARN"
+    },
+    "2PT_with_3_in_zone": {
+      "count": 391,
+      "pct": 0.008,
+      "severity": "INFO"
+    },
+    "2PT_distance_gt_25ft": {
+      "count": 55,
+      "pct": 0.001,
+      "severity": "INFO"
+    },
+    "3PT_distance_lt_20ft": {
+      "count": 189,
+      "pct": 0.004,
+      "severity": "INFO"
+    },
+    "range_distance_mismatch_Less Than 8 ft.": {
+      "count": 472,
+      "pct": 0.01,
+      "severity": "WARN"
+    },
+    "range_distance_mismatch_8-16 ft.": {
+      "count": 419,
+      "pct": 0.009,
+      "severity": "INFO"
+    },
+    "range_distance_mismatch_16-24 ft.": {
+      "count": 0,
+      "pct": 0.0,
+      "severity": "PASS"
+    },
+    "range_distance_mismatch_24+ ft.": {
+      "count": 251590,
+      "pct": 5.32,
+      "severity": "ERROR"
+    },
+    "unknown_team_abbreviations": []
+  },
+  "D7_encoding": {
+    "action_type_count": 70,
+    "action_type_spelling_variants": [],
+    "player_name_special_chars": []
+  },
+  "D8_reference_validation": {
+    "overall_fg_pct": {
+      "computed": 45.18,
+      "reference": 45.2,
+      "delta": -0.02,
+      "match": true
+    },
+    "total_records": {
+      "computed": 4729512,
+      "reference": 4729512,
+      "delta": 0,
+      "match": true
+    },
+    "zone_fg_pct": {
+      "Restricted Area": {
+        "computed": 60.41,
+        "reference": 60.4,
+        "delta": 0.01,
+        "match": true
+      },
+      "Mid-Range": {
+        "computed": 39.43,
+        "reference": 39.4,
+        "delta": 0.03,
+        "match": true
+      },
+      "Left Corner 3": {
+        "computed": 38.45,
+        "reference": 38.4,
+        "delta": 0.05,
+        "match": true
+      },
+      "Right Corner 3": {
+        "computed": 38.63,
+        "reference": 38.6,
+        "delta": 0.03,
+        "match": true
+      },
+      "Above the Break 3": {
+        "computed": 34.85,
+        "reference": 34.9,
+        "delta": -0.05,
+        "match": true
+      },
+      "Backcourt": {
+        "computed": 2.56,
+        "reference": 2.6,
+        "delta": -0.04,
+        "match": true
+      }
+    }
+  },
+  "severity_summary": {
+    "PASS": 30,
+    "INFO": 4,
+    "WARN": 2,
+    "ERROR": 1
+  }
+}
