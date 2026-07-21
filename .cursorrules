@@ -102,3 +102,11 @@ Before `git push`, always:
 - The three states (normal / empty / loading) all render correctly.
 - No console errors or warnings remain.
 - Code has been pushed and a PR is open or ready.
+
+### Task Completion Report
+
+When the agent finishes a task, it MUST report a summary including:
+
+1. **What was done** — brief description of the completed work.
+2. **Files changed** — list every file that was created, modified, or deleted, with its full path relative to the project root. Format: `- [x] path/to/file` (where x is `+` for new, `~` for modified, `-` for deleted).
+3. **Next steps** (if any) — what remains to be done or what the user should do next.
