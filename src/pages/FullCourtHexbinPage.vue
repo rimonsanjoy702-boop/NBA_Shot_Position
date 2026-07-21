@@ -124,7 +124,7 @@ const layerError = computed(() => pageState.value === 'error' ? errorDetail.valu
     <!-- ── Header ── -->
     <header class="page-header">
       <h1 class="page-title">🏀 全场 Hexbin 热力图</h1>
-      <p class="page-subtitle">正确尺寸全场视图 · 独立左右半场对比 · 23 赛季</p>
+      <p class="page-subtitle">独立左右半场对比 · 23 赛季</p>
     </header>
 
     <!-- ── Controls ── -->
@@ -148,8 +148,6 @@ const layerError = computed(() => pageState.value === 'error' ? errorDetail.valu
         <el-select :model-value="leftSelection.season" @update:model-value="(v:any) => onSeasonChange('left', v)" size="small" style="width:100px">
           <el-option v-for="s in ALL_SEASONS" :key="s" :label="s" :value="s" />
         </el-select>
-        <span v-if="leftSelection.entityLabel" class="info-label">{{ leftSelection.entityLabel }}</span>
-        <span class="cell-count">{{ leftCells.length.toLocaleString() }} 格</span>
       </div>
 
       <!-- Center spacer -->
@@ -176,8 +174,6 @@ const layerError = computed(() => pageState.value === 'error' ? errorDetail.valu
         <el-select :model-value="rightSelection.season" @update:model-value="(v:any) => onSeasonChange('right', v)" size="small" style="width:100px">
           <el-option v-for="s in ALL_SEASONS" :key="s" :label="s" :value="s" />
         </el-select>
-        <span v-if="rightSelection.entityLabel" class="info-label">{{ rightSelection.entityLabel }}</span>
-        <span class="cell-count">{{ rightCells.length.toLocaleString() }} 格</span>
       </div>
 
       <el-button v-if="pageState === 'error'" type="primary" size="small" @click="refreshAll">重试</el-button>
@@ -200,22 +196,23 @@ const layerError = computed(() => pageState.value === 'error' ? errorDetail.valu
     <!-- ── Legend ── -->
     <div class="legend-bar">
       <span class="legend-label">命中率 FG%</span>
+      <span class="legend-end">0%</span>
       <div class="color-strip">
         <span class="color-dot" style="background:#fbe3c8" /><span class="color-dot" style="background:#f4a460" />
         <span class="color-dot" style="background:#e8733a" /><span class="color-dot" style="background:#c9381a" />
         <span class="color-dot" style="background:#9e1206" /><span class="color-dot" style="background:#7a0b02" />
       </div>
-      <span class="legend-end">0%</span>
       <span class="legend-end">100%</span>
       <span class="legend-divider">|</span>
       <span class="legend-label">出手量</span>
+      <span class="legend-note">少</span>
       <svg width="20" height="20" viewBox="0 0 20 20">
         <polygon :points="(()=>{const p=[];for(let i=0;i<6;i++){const a=Math.PI/180*60*i;p.push(`${(10+4*Math.cos(a)).toFixed(1)},${(10+4*Math.sin(a)).toFixed(1)}`)}return p.join(' ')})()" fill="var(--text-secondary, #8b949e)" opacity="0.5" />
       </svg>
       <svg width="28" height="28" viewBox="0 0 28 28">
         <polygon :points="(()=>{const p=[];for(let i=0;i<6;i++){const a=Math.PI/180*60*i;p.push(`${(14+10*Math.cos(a)).toFixed(1)},${(14+10*Math.sin(a)).toFixed(1)}`)}return p.join(' ')})()" fill="var(--text-secondary, #8b949e)" opacity="0.5" />
       </svg>
-      <span class="legend-note">少 → 多</span>
+      <span class="legend-note">多</span>
     </div>
   </div>
 </template>
