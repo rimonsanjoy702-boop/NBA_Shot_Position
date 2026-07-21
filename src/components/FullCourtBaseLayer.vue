@@ -102,13 +102,13 @@ function hashXRight(i: number): number { return COURT_R - 70 - (i - 1) * 30; }
 
     <!-- FT half-circle (above FT line, toward midcourt) -->
     <path
-      :d="`M ${L_PAINT_R},${PAINT_T} A ${FT_R},${FT_R} 0 0,1 ${L_PAINT_R},${PAINT_B}`"
+      :d="`M ${L_PAINT_R},${BASKET_Y - FT_R} A ${FT_R},${FT_R} 0 0,1 ${L_PAINT_R},${BASKET_Y + FT_R}`"
       fill="none" :stroke="L2()" stroke-width="1"
     />
 
     <!-- Restricted area arc (toward baseline / left) -->
     <path
-      :d="`M ${L_BASKET_X},${BASKET_Y - RESTRICT_R} A ${RESTRICT_R},${RESTRICT_R} 0 0,0 ${L_BASKET_X},${BASKET_Y + RESTRICT_R}`"
+      :d="`M ${L_BASKET_X},${BASKET_Y - RESTRICT_R} A ${RESTRICT_R},${RESTRICT_R} 0 0,1 ${L_BASKET_X},${BASKET_Y + RESTRICT_R}`"
       fill="none" :stroke="L2()" stroke-width="1"
     />
 
@@ -149,13 +149,13 @@ function hashXRight(i: number): number { return COURT_R - 70 - (i - 1) * 30; }
 
     <!-- FT half-circle -->
     <path
-      :d="`M ${R_PAINT_L},${PAINT_T} A ${FT_R},${FT_R} 0 0,0 ${R_PAINT_L},${PAINT_B}`"
+      :d="`M ${R_PAINT_L},${BASKET_Y - FT_R} A ${FT_R},${FT_R} 0 0,0 ${R_PAINT_L},${BASKET_Y + FT_R}`"
       fill="none" :stroke="L2()" stroke-width="1"
     />
 
     <!-- Restricted area arc (toward baseline / right) -->
     <path
-      :d="`M ${R_BASKET_X},${BASKET_Y - RESTRICT_R} A ${RESTRICT_R},${RESTRICT_R} 0 0,1 ${R_BASKET_X},${BASKET_Y + RESTRICT_R}`"
+      :d="`M ${R_BASKET_X},${BASKET_Y - RESTRICT_R} A ${RESTRICT_R},${RESTRICT_R} 0 0,0 ${R_BASKET_X},${BASKET_Y + RESTRICT_R}`"
       fill="none" :stroke="L2()" stroke-width="1"
     />
 
