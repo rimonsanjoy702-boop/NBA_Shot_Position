@@ -67,11 +67,13 @@ function countToRadius(count: number): number {
   return SIZE_MIN + t * (SIZE_MAX - SIZE_MIN);
 }
 
-// ── Flat-top hexagon path ──
+// ── Pointy-top hexagon path ──
+// Data grid is flat-top, but the 90° coord transform rotates it to pointy-top.
+// Offset angle by -30° so hexagons tile edge-to-edge in view space.
 function fp(cx: number, cy: number, r: number): string {
   const pts: string[] = [];
   for (let i = 0; i < 6; i++) {
-    const a = (Math.PI / 180) * (60 * i);
+    const a = (Math.PI / 180) * (60 * i - 30);
     pts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`);
   }
   return pts.join(' ');
