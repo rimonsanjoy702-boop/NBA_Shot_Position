@@ -28,11 +28,17 @@ A collaborative visual analytics project for an NBA shot locations dataset (1997
 - Commit messages may be written in Chinese (team convention), but the type prefix stays in English.
 - Write clear descriptions: the message alone should let a teammate understand what changed and why.
 
-### Daily Workflow
+### Commit & Push Policy
 
+- **Auto-commit:** Agent should commit frequently — every logical unit of work. Commit messages follow the Conventional Commits format above.
+- **No auto-push:** Agent must NEVER push on its own. Pushing is a human decision.
+- **Push workflow:**
+  1. Agent completes a complete module (a feature, a fix, a data-processing step, etc.).
+  2. Agent reminds the user: the module is done, commits are ready, here is a summary of what changed.
+  3. Agent explicitly asks: **"是否推送?"** (Push now?)
+  4. Only when the user confirms, Agent runs `git push`.
 - **Before starting work each session:** `git pull origin main` to sync with teammates.
-- **Before wrapping up each session:** commit and push your branch. Do not leave uncommitted work sitting only on your local machine.
-- Commit frequently — small, focused commits are easier to review and revert than large ones.
+- **Before pushing,** always run the pre-push checklist below.
 
 ### Merging / Pull Requests
 
