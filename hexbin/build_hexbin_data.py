@@ -164,7 +164,7 @@ def time_bin_index(game_seconds: int) -> int:
 
 
 # ============================================================================
-# Hexbin Math — pointy-top hexagon grid
+# Hexbin Math — flat-top hexagon grid
 # ============================================================================
 
 def _compute_hex_centers(x: np.ndarray, y: np.ndarray, size: float
@@ -172,13 +172,17 @@ def _compute_hex_centers(x: np.ndarray, y: np.ndarray, size: float
     """
     Assign each (x, y) point to its nearest hexagon center.
     Returns (cx, cy) integer arrays of hex center coordinates.
-    Uses axial → cube rounding for accurate assignment.
+
+    Uses flat-top orientation: cx depends only on x, cy depends only on y.
+    This guarantees symmetric left/right coverage of the half-court.
     """
     sqrt3 = math.sqrt(3)
 
-    # Fractional axial coordinates
-    q_frac = (sqrt3 / 3.0 * x - 1.0 / 3.0 * y) / size
-    r_frac = (2.0 / 3.0 * y) / size
+    # Flat-top axial coordinates:
+    #   q_frac = (2/3 * x) / size        ← depends only on X
+    #   r_frac = (-1/3 * x + √3/3 * y) / size  ← depends only on Y (net of X tilt)
+    q_frac = (2.0 / 3.0 * x) / size
+    r_frac = (-1.0 / 3.0 * x + sqrt3 / 3.0 * y) / size
 
     # Round to integer axial
     q_round = np.round(q_frac).astype(int)
@@ -197,7 +201,9 @@ def _compute_hex_centers(x: np.ndarray, y: np.ndarray, size: float
     q_round[fix_q] = -r_round[fix_q] - s_round[fix_q]
     r_round[fix_r] = -q_round[fix_r] - s_round[fix_r]
 
-    # Convert axial → Cartesian center
+    # Flat-top Cartesian center:
+    #   cx = size * (3/2 * q)          ← horizontal spacing 1.5*size
+    #   cy = size * (√3/2 * q + √3 * r)  ← vertical spacing √3*size
     cx = np.round(size * (1.5 * q_round)).astype(int)
     cy = np.round(size * (sqrt3 / 2.0 * q_round + sqrt3 * r_round)).astype(int)
 
