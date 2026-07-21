@@ -10,22 +10,20 @@ import { useTimeFilterStore } from '@/store/timeFilter'
 import type { EChartsOption } from 'echarts'
 
 interface TimeShotItem {
-  time_bin: number
   label: string
   left_2pt: number
   right_2pt: number
   left_3pt: number
   right_3pt: number
-  shot_count: number
-  avg_fg: number
-  all_made: number
-  all_total: number
+  left_shot_count: number
+  right_shot_count: number
 }
 
 const timeStore = useTimeFilterStore()
 const chartOpt = ref<EChartsOption>({})
 
 watch(() => timeStore.timeCurveData, (dataList: TimeShotItem[]) => {
+  console.log('原始数据列表', dataList)
   if (!dataList || dataList.length === 0) return
 
   const xLabels = dataList.map(item => item.label)
@@ -33,7 +31,11 @@ watch(() => timeStore.timeCurveData, (dataList: TimeShotItem[]) => {
   const right2pt = dataList.map(item => item.right_2pt)
   const left3pt = dataList.map(item => item.left_3pt)
   const right3pt = dataList.map(item => item.right_3pt)
-  const shotCount = dataList.map(item => item.shot_count)
+  const leftShotCnt = dataList.map(item => item.left_shot_count)
+  const rightShotCnt = dataList.map(item => item.right_shot_count)
+
+  console.log('左出手次数数组', leftShotCnt)
+  console.log('右出手次数数组', rightShotCnt)
 
   chartOpt.value = {
     title: {
@@ -45,7 +47,14 @@ watch(() => timeStore.timeCurveData, (dataList: TimeShotItem[]) => {
       axisPointer: { type: 'cross' }
     },
     legend: {
-      data: ['左半场两分', '右半场两分', '左半场三分', '右半场三分', '总出手次数'],
+      data: [
+        '左半场两分',
+        '右半场两分',
+        '左半场三分',
+        '右半场三分',
+        '左半场出手次数',
+        '右半场出手次数'
+      ],
       top: 30
     },
     xAxis: {
@@ -56,14 +65,14 @@ watch(() => timeStore.timeCurveData, (dataList: TimeShotItem[]) => {
       {
         name: '命中率(%)',
         type: 'value',
-        min: 0,
+        min: 30,
         max: 65
       },
       {
         name: '出手次数',
         type: 'value',
         min: 0,
-        axisLabel: { formatter: '{value} 次' }
+        alignTicks: true
       }
     ],
     series: [
@@ -83,19 +92,35 @@ watch(() => timeStore.timeCurveData, (dataList: TimeShotItem[]) => {
         name: '左半场三分',
         type: 'line',
         yAxisIndex: 0,
-        data: left3pt
+        data: left3pt,
+        lineStyle: { type: 'solid', width: 2 },
+        symbol: 'circle',
+        symbolSize: 6,
+        itemStyle: { color: '#ffb400' }
       },
       {
         name: '右半场三分',
         type: 'line',
         yAxisIndex: 0,
-        data: right3pt
+        data: right3pt,
+        lineStyle: { type: 'dashed', width: 2 },
+        symbol: 'circle',
+        symbolSize: 6,
+        itemStyle: { color: '#e63946' }
       },
       {
-        name: '总出手次数',
+        name: '左半场出手次数',
         type: 'bar',
-        yAxisIndex: 1, // 绑定右侧坐标轴
-        data: shotCount
+        yAxisIndex: 1,
+        barWidth: 16,
+        data: leftShotCnt
+      },
+      {
+        name: '右半场出手次数',
+        type: 'bar',
+        yAxisIndex: 1,
+        barWidth: 16,
+        data: rightShotCnt
       }
     ]
   }
