@@ -1,6 +1,8 @@
 # AGENTS.md
 
-This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, etc.) when working in this repository. It is the single source of truth for project conventions.
+This file provides guidance to AI coding agents (Claude Code, Cursor, Copilot, etc.) when working in this repository.
+
+> **Sync rule:** When any change is made to this file, the agent MUST apply the same change to `CLAUDE.md`, `.cursorrules`, and `.github/copilot-instructions.md` so all agent instruction files stay in sync. Edit `AGENTS.md` → update the other three. Edit `CLAUDE.md` → update the other three. The four files must always have identical content (only the title line differs — "CLAUDE.md" vs "AGENTS.md" etc.).
 
 ## Project Overview
 
