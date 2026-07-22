@@ -147,44 +147,44 @@ function hideTooltip() {
 }
 
 // ============================================================================
-// Colors — designer scheme v3
+// Colors — NBA team-inspired palette
 //
-// L1 (time, 8 nodes):    magenta & phantom violet (light/dark alternating)
-// L2 (zone, 7 nodes):    sunset & earth tones (yellow/orange glow)
-// L3 (action, 5 nodes):  cyan & deep sea (cool closing colors)
+// L1 (time, 8 nodes): Lakers (紫→金) → Knicks (橙→蓝) → Heat (红→黄→粉→青)
+// L2 (zone, 7 nodes):  Spurs (银→Fiesta青/粉/橙) → Warriors (蓝→黄) → Celtics (绿)
+// L3 (action, 5 nodes): Bulls (红→旗蓝) → Cavaliers (酒红→金) → Rockets (芥末黄)
 // L4 (result, 2 nodes):  status green (Made) / status red (Missed)
 // ============================================================================
 
-/** L1: magenta & phantom violet (8 time bins) */
+/** L1: Lakers → Knicks → Heat (8 time bins) */
 const L1_COLORS = [
-  '#FF0055',  // Q1前 — 荧光洋红
-  '#F8A9DF',  // Q1后 — 柔雾淡粉
-  '#8C00FF',  // Q2前 — 电光深紫
-  '#FF729F',  // Q2后 — 火烈鸟粉
-  '#D62AD0',  // Q3前 — 霓虹亮紫
-  '#E0A3FF',  // Q3后 — 淡紫藤色
-  '#FF2A6D',  // Q4前 — 赛博亮红
-  '#C774E8',  // Q4后 — 丁香亮紫
+  '#552583',  // Q1前 — 湖人紫
+  '#FDB927',  // Q1后 — 湖人金
+  '#F58426',  // Q2前 — 尼克斯橙
+  '#006BB6',  // Q2后 — 尼克斯蓝
+  '#98002E',  // Q3前 — 热火经典红
+  '#F9A01B',  // Q3后 — 热火经典黄
+  '#F9429E',  // Q4前 — 南海岸粉
+  '#43BEE5',  // Q4后 — 南海岸蓝
 ]
 
-/** L2: sunset & earth (7 shot zones) */
+/** L2: Spurs → Warriors → Celtics (7 shot zones) */
 const L2_COLORS: Record<string, string> = {
-  'RA':    '#FFE600',  // Restricted Area — 荧光柠檬黄
-  'Paint': '#FF5100',  // Paint (Non-RA) — 赤橙色
-  'MR':    '#FFF176',  // Mid-Range — 浅沙黄
-  'LC3':   '#FF7B00',  // Left Corner 3 — 亮橘色
-  'RC3':   '#D4AF37',  // Right Corner 3 — 香槟金
-  'AB3':   '#FF9E5E',  // Above the Break 3 — 蜜桃橙
-  'BC':    '#FFB300',  // Backcourt — 金盏黄
+  'RA':    '#C4CED4',  // Restricted Area — 马刺银灰
+  'Paint': '#00B2A9',  // Paint (Non-RA) — Fiesta青
+  'MR':    '#F51B6D',  // Mid-Range — Fiesta粉
+  'LC3':   '#F58220',  // Left Corner 3 — Fiesta橙
+  'RC3':   '#1D428A',  // Right Corner 3 — 勇士蓝
+  'AB3':   '#FFC72C',  // Above the Break 3 — 勇士黄
+  'BC':    '#007A33',  // Backcourt — 凯尔特人绿
 }
 
-/** L3: cyan & deep sea (5 action types) */
+/** L3: Bulls → Cavaliers → Rockets (5 action types) */
 const L3_COLORS: Record<string, string> = {
-  'Dunk':  '#05D5FF',  // 扣篮 — 亮青色
-  'Layup': '#00E676',  // 上篮 — 荧光绿
-  'Hook':  '#82B1FF',  // 勾手 — 冰川蓝
-  'Tip':   '#64FFDA',  // 补篮 — 薄荷绿
-  'Jump':  '#2979FF',  // 跳投 — 耀目蓝
+  'Dunk':  '#CE1141',  // 扣篮 — 公牛红
+  'Layup': '#418FDE',  // 上篮 — 公牛旗蓝
+  'Hook':  '#860038',  // 勾手 — 骑士酒红
+  'Tip':   '#FDBB30',  // 补篮 — 骑士金
+  'Jump':  '#F3C000',  // 跳投 — 火箭芥末黄
 }
 
 /** L4: status colors */
