@@ -86,48 +86,58 @@ watch(() => props.nodes, () => {
   focusedNodeId.value = null
 })
 
-/** Indices of links connected to the focused node (both incoming & outgoing) */
-const connectedLinkIndices = computed(() => {
-  if (!focusedNodeId.value) return null
-  const set = new Set<number>()
-  positionedLinks.value.forEach((link, i) => {
-    if (link.source.id === focusedNodeId.value || link.target.id === focusedNodeId.value) {
-      set.add(i)
+/**
+ * Compute the 1-hop connected set for the focused node.
+ *
+ * "Keep visible" set = clicked node + links directly connected to it + nodes
+ * at the other end of those links.  Everything else is dimmed — including
+ * nodes and links that are 2+ hops away.
+ */
+const connectedNodeIds = computed<Set<string>>(() => {
+  if (!focusedNodeId.value) return new Set()
+  const nodeSet = new Set<string>([focusedNodeId.value])
+  for (const link of positionedLinks.value) {
+    if (link.source.id === focusedNodeId.value) {
+      nodeSet.add(link.target.id)
     }
-  })
-  return set
+    if (link.target.id === focusedNodeId.value) {
+      nodeSet.add(link.source.id)
+    }
+  }
+  return nodeSet
 })
 
-// Compute dimmed links
-const linkOpacity = computed(() => {
+/** Indices of links directly connected to the focused node */
+const connectedLinkIndices = computed<Set<number>>(() => {
+  if (!focusedNodeId.value) return new Set()
+  const linkSet = new Set<number>()
+  positionedLinks.value.forEach((link, i) => {
+    if (link.source.id === focusedNodeId.value || link.target.id === focusedNodeId.value) {
+      linkSet.add(i)
+    }
+  })
+  return linkSet
+})
+
+/** Indices of links that are NOT in the connected subgraph (→ dim) */
+const dimmedLinkIndices = computed<Set<number>>(() => {
+  if (!focusedNodeId.value) return new Set()
+  const connected = connectedLinkIndices.value
   const dimmed = new Set<number>()
+  positionedLinks.value.forEach((_, i) => {
+    if (!connected.has(i)) dimmed.add(i)
+  })
+  return dimmed
+})
 
-  // Focus highlight mode takes priority
-  if (focusedNodeId.value && connectedLinkIndices.value) {
-    positionedLinks.value.forEach((_, i) => {
-      if (!connectedLinkIndices.value!.has(i)) dimmed.add(i)
-    })
-    return dimmed
-  }
-
-  if (props.selectedTimeBin != null && props.selectedTimeBin >= 0) {
-    // Only show links connected to the selected L1 node
-    const selectedL1Id = `L1_${props.selectedTimeBin}`
-    positionedLinks.value.forEach((link, i) => {
-      if (link.source.id !== selectedL1Id && link.target.id !== selectedL1Id) {
-        dimmed.add(i)
-      }
-    })
-  }
-
-  if (props.selectedZone) {
-    positionedLinks.value.forEach((link, i) => {
-      if (link.source.id !== props.selectedZone && link.target.id !== props.selectedZone) {
-        dimmed.add(i)
-      }
-    })
-  }
-
+/** Node IDs that are NOT in the connected subgraph (→ dim) */
+const dimmedNodeIds = computed<Set<string>>(() => {
+  if (!focusedNodeId.value) return new Set()
+  const connected = connectedNodeIds.value
+  const dimmed = new Set<string>()
+  positionedNodes.value.forEach((n) => {
+    if (!connected.has(n.id)) dimmed.add(n.id)
+  })
   return dimmed
 })
 
@@ -230,13 +240,10 @@ const L4_MISSED_COLOR = '#EF4444'
 const NODE_STROKE = 'rgba(255,255,255,0.12)'
 const NODE_STROKE_HOVER = 'rgba(255,255,255,0.6)'
 
-/** Get node fill color */
+/** Get node fill color — always use the node's native palette color */
 function getNodeFill(node: SankeyNode): string {
   if (node.layer === 1) {
     const idx = node.meta?.time_index ?? 0
-    if (node.meta?.time_index === props.selectedTimeBin) {
-      return '#FFFFFF'  // selected L1: white highlight
-    }
     return L1_COLORS[idx] || L1_COLORS[0]
   }
   if (node.layer === 2) {
@@ -261,13 +268,6 @@ function getNodeBorderColor(node: SankeyNode): string {
     return 'rgba(255,255,255,0.1)'
   }
   return NODE_STROKE
-}
-
-function isSelected(node: SankeyNode): boolean {
-  if (props.selectedZone === node.id) return true
-  if (props.selectedAction === node.id) return true
-  if (props.selectedOutcome === node.id) return true
-  return false
 }
 
 // ============================================================================
@@ -355,8 +355,8 @@ const COLUMN_HEADERS = [
           :key="'link-'+i"
           :d="link.path"
           :fill="link.color"
-          :opacity="linkOpacity.has(i) ? 0.08 : (hoveredLink === i ? 0.85 : 0.5)"
-          :filter="(focusedNodeId && linkOpacity.has(i)) ? 'url(#dim-filter)' : undefined"
+          :opacity="dimmedLinkIndices.has(i) ? 0.08 : (hoveredLink === i ? 0.85 : 0.5)"
+          :filter="dimmedLinkIndices.has(i) ? 'url(#dim-filter)' : undefined"
           :style="{
             transition: 'opacity 0.2s ease',
             cursor: 'pointer',
@@ -374,7 +374,7 @@ const COLUMN_HEADERS = [
         <g
           v-for="node in positionedNodes"
           :key="node.id"
-          :class="['sankey-node', { selected: isSelected(node), focused: focusedNodeId === node.id }]"
+          :class="['sankey-node']"
           :style="{ cursor: 'pointer' }"
           @click="onNodeClick(node)"
           @mouseenter="showTooltip($event, nodeTooltip(node))"
@@ -390,12 +390,9 @@ const COLUMN_HEADERS = [
             ry="4"
             :fill="getNodeFill(node)"
             :stroke="hoveredNode === node.id ? NODE_STROKE_HOVER : getNodeBorderColor(node)"
-            :stroke-width="isSelected(node) ? 3 : 1.5"
-            :opacity="
-              (props.selectedTimeBin != null && props.selectedTimeBin >= 0 && node.layer !== 1)
-                ? 0.4 : 1
-            "
-            :filter="(focusedNodeId && focusedNodeId !== node.id) ? 'url(#dim-filter)' : undefined"
+            :stroke-width="1.5"
+            :opacity="dimmedNodeIds.has(node.id) ? 0.35 : 1"
+            :filter="dimmedNodeIds.has(node.id) ? 'url(#dim-filter)' : undefined"
             :style="{
               transition: 'opacity 0.2s ease, stroke-width 0.2s ease',
             }"
@@ -575,14 +572,5 @@ function nodeTooltip(node: SankeyNode): string {
 /* === Node interactions === */
 .sankey-node {
   transition: opacity 0.15s ease;
-}
-
-.sankey-node.selected rect {
-  filter: brightness(1.3);
-}
-
-.sankey-node.focused rect {
-  stroke: rgba(255, 255, 255, 0.85);
-  stroke-width: 2.5px;
 }
 </style>
