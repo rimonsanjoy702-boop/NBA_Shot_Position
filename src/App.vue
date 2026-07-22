@@ -2,6 +2,7 @@
 import { RouterView } from 'vue-router';
 import { onMounted } from "vue";
 import { ElMessage } from "element-plus";
+import GlobalNavBar from '@/components/GlobalNavBar.vue';
 
 async function initApp() {
   console.log('App initialized');
@@ -17,7 +18,10 @@ onMounted(() => initApp()
 
 <template>
   <div id="root">
-    <RouterView/>
+    <GlobalNavBar />
+    <div class="app-content">
+      <RouterView/>
+    </div>
   </div>
 </template>
 
@@ -130,5 +134,9 @@ html, body, #app {
   font-family: var(--font-stack);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
+}
+
+.app-content {
+  padding-top: 56px; /* offset for fixed GlobalNavBar */
 }
 </style>

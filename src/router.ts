@@ -7,7 +7,13 @@ import FullCourtHexbinPage from './charts/hexbin/FullCourtHexbinPage.vue'
 import ThreePointComparePage from './charts/three-point/ThreePointComparePage.vue'
 
 const routes = [
-    { path: '/', component: HomePage },
+    // 主页面路由 (带 GlobalNavBar)
+    { path: '/',            redirect: '/space' },
+    { path: '/space',       component: () => import('./pages/SpaceExplorerPage.vue'),   meta: { label: '空间探索', icon: '🏀' } },
+    { path: '/evolution',   component: () => import('./pages/EvolutionTrendsPage.vue'), meta: { label: '演化趋势', icon: '📈' } },
+    { path: '/structure',   component: () => import('./pages/ShotStructurePage.vue'),   meta: { label: '投篮结构', icon: '🔀' } },
+
+    // 图表单独页面路由
     { path: '/hexbin-classic', component: HexbinClassicPage },
     { path: '/hexbin-fullcourt', component: FullCourtHexbinPage },
     { path: '/hexbin', component: HexbinPage },
