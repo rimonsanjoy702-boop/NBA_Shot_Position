@@ -45,8 +45,8 @@ const chartWinDom = ref<HTMLDivElement | null>(null);
 // ==========================================================================
 
 const SVG_W = 1880;
-const SVG_H = 500;
-const MARGIN = { top: 24, right: 40, bottom: 48, left: 60 };
+const SVG_H = 600;
+const MARGIN = { top: 24, right: 40, bottom: 80, left: 60 };
 const PLOT_W = SVG_W - MARGIN.left - MARGIN.right;
 const PLOT_H = SVG_H - MARGIN.top - MARGIN.bottom;
 
@@ -133,7 +133,7 @@ function makeSvg(
     .call(d3.axisLeft(yScale).ticks(6))
     .selectAll("text")
     .attr("fill", "var(--text-secondary, #8b949e)")
-    .attr("font-size", "13");
+    .attr("font-size", "22");
 
   g.selectAll(".y-axis .domain, .y-axis .tick line")
     .attr("stroke", "var(--chart-axis, rgba(255,255,255,0.15))");
@@ -149,7 +149,7 @@ function makeSvg(
 
   xAxis.selectAll("text")
     .attr("fill", "var(--text-secondary, #8b949e)")
-    .attr("font-size", "12")
+    .attr("font-size", "20")
     .attr("transform", "rotate(-45)")
     .style("text-anchor", "end");
 
@@ -201,7 +201,7 @@ function addTooltip(
     .attr("x", 12)
     .attr("y", 22)
     .attr("fill", "var(--text-primary, #e6edf3)")
-    .attr("font-size", "13")
+    .attr("font-size", "22")
     .style("white-space", "pre");
 
   const tooltipLine = g.append("line")
@@ -351,7 +351,7 @@ function drawChart(
 
   // ---- Legend below chart footer ----
   let legendX = MARGIN.left;
-  const legendY = PLOT_H + 108;
+  const legendY = PLOT_H + 50;
   const groupsForLegend = [
     { key: 'leader',  label: '先行者 14队' },
     { key: 'mid',     label: '过渡组 4队' },
@@ -369,7 +369,7 @@ function drawChart(
       .attr("x", legendX + 36)
       .attr("y", legendY + 4)
       .attr("fill", "var(--text-secondary, #8b949e)")
-      .attr("font-size", "12")
+      .attr("font-size", "22")
       .text(gc.label);
     legendX += 150;
   });
@@ -379,7 +379,7 @@ function drawChart(
     .attr("x", MARGIN.left)
     .attr("y", legendY + 24)
     .attr("fill", "var(--text-tertiary, #5c6670)")
-    .attr("font-size", "11")
+    .attr("font-size", "20")
     .text("实线 = 三分数据（3PA / 3PAr），虚线 = 常规赛胜率");
 
   // ---- Vertical reference lines ----
@@ -401,7 +401,7 @@ function drawChart(
       .attr("x", vx + 6)
       .attr("y", 14)
       .attr("fill", vm.color)
-      .attr("font-size", "13")
+      .attr("font-size", "22")
       .text(vm.label);
   });
 
@@ -420,7 +420,7 @@ function drawChart(
         .attr("x", x20 + 14)
         .attr("y", PLOT_H - 8)
         .attr("fill", "var(--text-tertiary, #5c6670)")
-        .attr("font-size", "13")
+        .attr("font-size", "22")
         .text("投篮数据截止");
     }
   }
@@ -449,7 +449,7 @@ function drawChart(
   }
 
   // Tooltip
-  addTooltip(svg, xScale, g, seasons, aggData, showMid, metric);
+  addTooltip(svg, xScale, g, seasons, aggData, false, metric);
 }
 
 // ==========================================================================
