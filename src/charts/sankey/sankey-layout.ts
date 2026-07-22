@@ -206,16 +206,16 @@ export function computeLayout(
     // Color: inherit from the source node (same palette as SankeyChart.vue)
     let color: string
     if (srcNode.layer === 1) {
-      const L1_C = ['#39FF14','#00FF87','#00FFFF','#00DFFF','#00BFFF','#3399FF','#5A84FF','#6A7BFF']
+      const L1_C = ['#FF0055','#F8A9DF','#8C00FF','#FF729F','#D62AD0','#E0A3FF','#FF2A6D','#C774E8']
       color = L1_C[srcNode.meta?.time_index ?? 0] || L1_C[0]
     } else if (srcNode.layer === 2) {
       const zk = srcNode.id.replace('L2_', '')
-      const L2_C: Record<string,string> = {RA:'#FFB347',Paint:'#FF8C00',MR:'#FF6A00',LC3:'#FF4D00',RC3:'#FF2400',AB3:'#FF0F33',BC:'#FF0055'}
-      color = L2_C[zk] || '#FF8C00'
+      const L2_C: Record<string,string> = {RA:'#FFE600',Paint:'#FF5100',MR:'#FFF176',LC3:'#FF7B00',RC3:'#D4AF37',AB3:'#FF9E5E',BC:'#FFB300'}
+      color = L2_C[zk] || '#FFF176'
     } else {
       const ak = srcNode.id.replace('L3_', '')
-      const L3_C: Record<string,string> = {Dunk:'#FF3399',Layup:'#FF5566',Hook:'#FF8844',Tip:'#FFBB22',Jump:'#FFEE00'}
-      color = L3_C[ak] || '#FF3399'
+      const L3_C: Record<string,string> = {Dunk:'#05D5FF',Layup:'#00E676',Hook:'#82B1FF',Tip:'#64FFDA',Jump:'#2979FF'}
+      color = L3_C[ak] || '#05D5FF'
     }
 
     positionedLinks.push({

@@ -147,44 +147,44 @@ function hideTooltip() {
 }
 
 // ============================================================================
-// Colors — designer scheme v2
+// Colors — designer scheme v3
 //
-// L1 (time, 8 nodes):    green→cyan→blue gradient
-// L2 (zone, 7 nodes):    orange→red gradient
-// L3 (action, 5 nodes):  pink→yellow gradient
+// L1 (time, 8 nodes):    magenta & phantom violet (light/dark alternating)
+// L2 (zone, 7 nodes):    sunset & earth tones (yellow/orange glow)
+// L3 (action, 5 nodes):  cyan & deep sea (cool closing colors)
 // L4 (result, 2 nodes):  status green (Made) / status red (Missed)
 // ============================================================================
 
-/** L1: green→cyan→blue (8 time bins) */
+/** L1: magenta & phantom violet (8 time bins) */
 const L1_COLORS = [
-  '#39FF14',  // Q1前 — 荧光绿
-  '#00FF87',  // Q1后 — 薄荷绿
-  '#00FFFF',  // Q2前 — 亮青色
-  '#00DFFF',  // Q2后 — 浅天蓝
-  '#00BFFF',  // Q3前 — 深天蓝
-  '#3399FF',  // Q3后 — 亮蓝色
-  '#5A84FF',  // Q4前 — 柔和宝蓝
-  '#6A7BFF',  // Q4后 — 矢车菊蓝
+  '#FF0055',  // Q1前 — 荧光洋红
+  '#F8A9DF',  // Q1后 — 柔雾淡粉
+  '#8C00FF',  // Q2前 — 电光深紫
+  '#FF729F',  // Q2后 — 火烈鸟粉
+  '#D62AD0',  // Q3前 — 霓虹亮紫
+  '#E0A3FF',  // Q3后 — 淡紫藤色
+  '#FF2A6D',  // Q4前 — 赛博亮红
+  '#C774E8',  // Q4后 — 丁香亮紫
 ]
 
-/** L2: orange→red (7 shot zones) */
+/** L2: sunset & earth (7 shot zones) */
 const L2_COLORS: Record<string, string> = {
-  'RA':    '#FFB347',  // Restricted Area — 亮橙黄
-  'Paint': '#FF8C00',  // Paint (Non-RA) — 标准橙
-  'MR':    '#FF6A00',  // Mid-Range — 橘红色
-  'LC3':   '#FF4D00',  // Left Corner 3 — 朱红色
-  'RC3':   '#FF2400',  // Right Corner 3 — 鲜红色
-  'AB3':   '#FF0F33',  // Above the Break 3 — 亮绯红
-  'BC':    '#FF0055',  // Backcourt — 玫瑰红
+  'RA':    '#FFE600',  // Restricted Area — 荧光柠檬黄
+  'Paint': '#FF5100',  // Paint (Non-RA) — 赤橙色
+  'MR':    '#FFF176',  // Mid-Range — 浅沙黄
+  'LC3':   '#FF7B00',  // Left Corner 3 — 亮橘色
+  'RC3':   '#D4AF37',  // Right Corner 3 — 香槟金
+  'AB3':   '#FF9E5E',  // Above the Break 3 — 蜜桃橙
+  'BC':    '#FFB300',  // Backcourt — 金盏黄
 }
 
-/** L3: pink→yellow (5 action types) */
+/** L3: cyan & deep sea (5 action types) */
 const L3_COLORS: Record<string, string> = {
-  'Dunk':  '#FF3399',  // 扣篮 — 荧光粉
-  'Layup': '#FF5566',  // 上篮 — 珊瑚粉红
-  'Hook':  '#FF8844',  // 勾手 — 蜜桃橙
-  'Tip':   '#FFBB22',  // 补篮 — 金黄色
-  'Jump':  '#FFEE00',  // 跳投 — 明黄色
+  'Dunk':  '#05D5FF',  // 扣篮 — 亮青色
+  'Layup': '#00E676',  // 上篮 — 荧光绿
+  'Hook':  '#82B1FF',  // 勾手 — 冰川蓝
+  'Tip':   '#64FFDA',  // 补篮 — 薄荷绿
+  'Jump':  '#2979FF',  // 跳投 — 耀目蓝
 }
 
 /** L4: status colors */
