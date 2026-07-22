@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage.vue'
 import HexbinPage from './pages/HexbinPage.vue'
 import HexbinClassicPage from './pages/HexbinClassicPage.vue'
 import FullCourtHexbinPage from './pages/FullCourtHexbinPage.vue'
+import ThreePointComparePage from './pages/ThreePointComparePage.vue'
 
 const routes = [
     { path: '/', component: HomePage },
@@ -12,6 +13,7 @@ const routes = [
     { path: '/hexbin-classic', component: HexbinClassicPage },
     { path: '/hexbin-fullcourt', component: FullCourtHexbinPage },
     { path: '/hexbin', component: HexbinPage },
+    { path: '/three-point-compare', component: ThreePointComparePage },
 ]
 
 export const router = createRouter({
