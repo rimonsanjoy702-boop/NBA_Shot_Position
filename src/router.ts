@@ -2,10 +2,12 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import HomePage from './pages/HomePage.vue'
 import DashboardPage from './pages/DashboardPage.vue'
+import FullCourtHexbinPage from './charts/hexbin/FullCourtHexbinPage.vue'
 
 const routes = [
     { path: '/',           component: HomePage,      meta: { label: '首页',   icon: '🏠' } },
     { path: '/dashboard',  component: DashboardPage,  meta: { label: '仪表盘', icon: '📊' } },
+    { path: '/fullcourt',  component: FullCourtHexbinPage, meta: { label: '全场热力图', icon: '🏟️' } },
 ]
 
 export const router = createRouter({
