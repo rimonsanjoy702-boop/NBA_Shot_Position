@@ -374,7 +374,7 @@ const COLUMN_HEADERS = [
             :x="node.x + colWidth(node.layer) / 2"
             :y="node.y + node.height / 2 + 13"
             text-anchor="middle"
-            fill="#8b949e"
+            fill="rgba(255,255,255,0.7)"
             font-size="9"
           >
             {{ getNodeLabel(node) }}
