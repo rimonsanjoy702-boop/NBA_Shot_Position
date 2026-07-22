@@ -10,7 +10,8 @@ function goHome() {
 }
 
 function clearEntity() {
-  store.clearEntity('navbar')
+  const side = store.activeSide
+  store.setSlot(side, { scope: 'league', entityId: undefined, entityLabel: undefined }, 'navbar')
 }
 </script>
 
