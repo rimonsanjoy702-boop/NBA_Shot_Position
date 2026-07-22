@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, shallowRef } from 'vue'
+import { useAnalysisContext } from '@/stores/analysisContext'
 import HexbinPage from '@/charts/hexbin/HexbinPage.vue'
 import KdeChart from '@/charts/kde/KdeChart.vue'
 import ThreePointCompareChart from '@/charts/three-point/components/ThreePointCompareChart.vue'
@@ -13,8 +14,10 @@ import {
   getAvailableTeams,
   getAvailablePlayers,
 } from '@/charts/sankey/sankey-data'
-import type { SankeySeasonData, SankeyNode, SankeyLink, LoadingState, Scope, EntityOption, CourtSide, SankeySelection } from '@/charts/sankey/types'
+import type { SankeySeasonData, SankeyNode, SankeyLink, LoadingState, Scope, EntityOption, CourtSide } from '@/charts/sankey/types'
 import { ALL_SEASONS } from '@/charts/sankey/types'
+
+const store = useAnalysisContext()
 
 // ── 三分数据 ──
 const threeStore = useThreePointCompareStore()
@@ -22,13 +25,18 @@ const aggData = ref<AggDataMap>({})
 const seasons3p = ref<string[]>([])
 
 // ═══════════════════════════════════════════════════════════
-// Sankey — Left / right half-court, independent selectors
+// Sankey — reads/writes Store slots (v3 golden triangle sync)
 // ═══════════════════════════════════════════════════════════
 
-const sankeySide = ref<CourtSide>('left')
+// sankeySide is bound to Store.activeSide
+const sankeySide = computed({
+  get: () => store.activeSide,
+  set: (v: CourtSide) => store.setActiveSide(v, 'sankey-tab'),
+})
 
-const leftSelection = ref<SankeySelection>({ scope: 'league', season: '2019-20' })
-const rightSelection = ref<SankeySelection>({ scope: 'league', season: '2019-20' })
+// Sankey selections are computed from the corresponding Store slot
+const leftSelection = computed(() => ({ scope: store.leftSlot.scope, season: store.leftSlot.season, entityId: store.leftSlot.entityId }))
+const rightSelection = computed(() => ({ scope: store.rightSlot.scope, season: store.rightSlot.season, entityId: store.rightSlot.entityId }))
 
 const leftData = ref<SankeySeasonData | null>(null)
 const rightData = ref<SankeySeasonData | null>(null)
@@ -43,12 +51,6 @@ const sankeyError = ref('')
 
 const nodes = ref<SankeyNode[]>([])
 const links = ref<SankeyLink[]>([])
-
-// Selected chart nodes (breadcrumb, for hexbin linkage)
-const selectedTimeBin = ref<number>(-1)
-const selectedZone = ref<string | null>(null)
-const selectedAction = ref<string | null>(null)
-const selectedOutcome = ref<string | null>(null)
 
 // ═══════ Derived — current active side ═══════
 
@@ -105,62 +107,31 @@ function refreshActiveChart() {
   nodes.value = result.nodes
   links.value = result.links
   sankeyState.value = result.nodes.length > 0 ? 'ready' : 'empty'
-  selectedTimeBin.value = -1
-  selectedZone.value = null
-  selectedAction.value = null
-  selectedOutcome.value = null
 }
 
-// Season change → re-fetch, then re-extract
-async function onLeftSeasonChange() {
-  await loadSide('left')
-  if (sankeySide.value === 'left') refreshActiveChart()
-}
-async function onRightSeasonChange() {
-  await loadSide('right')
-  if (sankeySide.value === 'right') refreshActiveChart()
-}
+// ── Listen to Store slot changes (from Hexbin selectors) → re-fetch/refresh ──
+watch(() => store.leftSlot.season, async () => { await loadSide('left'); if (sankeySide.value === 'left') refreshActiveChart() })
+watch(() => store.rightSlot.season, async () => { await loadSide('right'); if (sankeySide.value === 'right') refreshActiveChart() })
+watch(() => store.leftSlot.scope, () => { if (sankeySide.value === 'left') refreshActiveChart() })
+watch(() => store.rightSlot.scope, () => { if (sankeySide.value === 'right') refreshActiveChart() })
+watch(() => store.leftSlot.entityId, () => { if (sankeySide.value === 'left') refreshActiveChart() })
+watch(() => store.rightSlot.entityId, () => { if (sankeySide.value === 'right') refreshActiveChart() })
 
-watch(() => leftSelection.value.season, onLeftSeasonChange)
-watch(() => rightSelection.value.season, onRightSeasonChange)
-
-// Scope / entity change → re-extract from cached data
-watch(() => leftSelection.value.scope, () => { if (sankeySide.value === 'left') refreshActiveChart() })
-watch(() => rightSelection.value.scope, () => { if (sankeySide.value === 'right') refreshActiveChart() })
-watch(() => leftSelection.value.entityId, () => { if (sankeySide.value === 'left') refreshActiveChart() })
-watch(() => rightSelection.value.entityId, () => { if (sankeySide.value === 'right') refreshActiveChart() })
-
-// Switch side → just re-extract from the other side's cached data
+// Switch side → re-extract from the other side's cached data
 watch(sankeySide, () => refreshActiveChart())
 
-// Helpers
-function setSelection(side: CourtSide, patch: Partial<SankeySelection>) {
-  if (side === 'left') {
-    leftSelection.value = { ...leftSelection.value, ...patch }
-  } else {
-    rightSelection.value = { ...rightSelection.value, ...patch }
-  }
-}
+// ═══════ Sankey selectors → write to Store ═══════
 
-// ── Chart event handlers ──
-function onSelectTimeBin(idx: number) {
-  selectedTimeBin.value = selectedTimeBin.value === idx ? -1 : idx
-}
-function onSelectZone(id: string) {
-  selectedZone.value = selectedZone.value === id ? null : id
-}
-function onSelectAction(id: string) {
-  selectedAction.value = selectedAction.value === id ? null : id
-}
-function onSelectOutcome(id: string) {
-  selectedOutcome.value = selectedOutcome.value === id ? null : id
-}
-function clearSelection() {
-  selectedTimeBin.value = -1; selectedZone.value = null
-  selectedAction.value = null; selectedOutcome.value = null
+function setSelection(side: CourtSide, patch: { scope?: Scope; entityId?: number; season?: string }) {
+  store.setSlot(side, {
+    ...(patch.scope !== undefined ? { scope: patch.scope, entityId: patch.entityId ?? undefined, entityLabel: undefined } : {}),
+    ...(patch.entityId !== undefined ? { entityId: patch.entityId } : {}),
+    ...(patch.season !== undefined ? { season: patch.season } : {}),
+  }, 'sankey')
 }
 
 // ═══════ Init ═══════
+
 async function init() {
   sankeyState.value = 'loading'
   try {
@@ -173,18 +144,15 @@ async function init() {
 }
 
 onMounted(async () => {
-  // 三分数据
   try { await threeStore.loadAll() } catch {}
   aggData.value = threeStore.aggData
   seasons3p.value = threeStore.seasonList
 
-  // 时间-FG 数据
   try {
     const resp = await fetch('/data/time_fg_base.json')
     useTimeFilterStore().updateCurveData(await resp.json())
   } catch {}
 
-  // 桑基初始加载
   init()
 })
 </script>
@@ -255,44 +223,11 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Breadcrumb -->
-        <div
-          v-if="selectedTimeBin >= 0 || selectedZone || selectedAction || selectedOutcome"
-          class="sankey-breadcrumb"
-        >
-          <span class="breadcrumb-label">已选：</span>
-          <span v-if="selectedTimeBin >= 0" class="breadcrumb-chip time-chip">
-            Q{{ Math.floor(selectedTimeBin / 2) + 1 }}{{ selectedTimeBin % 2 === 0 ? '前' : '后' }}
-            <button class="chip-close" @click="selectedTimeBin = -1">×</button>
-          </span>
-          <span v-if="selectedZone" class="breadcrumb-chip zone-chip">
-            {{ selectedZone }}
-            <button class="chip-close" @click="selectedZone = null">×</button>
-          </span>
-          <span v-if="selectedAction" class="breadcrumb-chip action-chip">
-            {{ selectedAction }}
-            <button class="chip-close" @click="selectedAction = null">×</button>
-          </span>
-          <span v-if="selectedOutcome" class="breadcrumb-chip outcome-chip">
-            {{ selectedOutcome }}
-            <button class="chip-close" @click="selectedOutcome = null">×</button>
-          </span>
-          <button class="clear-all" @click="clearSelection">清除全部</button>
-        </div>
-
         <!-- Chart -->
         <SankeyChart
           :state="sankeyState"
           :nodes="nodes"
           :links="links"
-          :selected-time-bin="selectedTimeBin"
-          :selected-zone="selectedZone"
-          :selected-action="selectedAction"
-          :selected-outcome="selectedOutcome"
-          @select-time-bin="onSelectTimeBin"
-          @select-zone="onSelectZone"
-          @select-action="onSelectAction"
-          @select-outcome="onSelectOutcome"
         />
       </div>
     </div>
@@ -399,50 +334,6 @@ onMounted(async () => {
 .sankey-entity-select {
   min-width: 130px;
   max-width: 160px;
-}
-
-/* ── Breadcrumb ── */
-.sankey-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  background: rgba(52,152,219,0.08);
-  border: 1px solid rgba(52,152,219,0.2);
-  border-radius: 6px;
-  font-size: 11px;
-  flex-wrap: wrap;
-}
-.breadcrumb-label { color: var(--text-secondary); }
-.breadcrumb-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 7px;
-  border-radius: 4px;
-  color: #fff;
-  font-size: 11px;
-}
-.time-chip { background: #d95926; }
-.zone-chip { background: #199e70; }
-.action-chip { background: #9085e9; }
-.outcome-chip { background: #3987e5; }
-.chip-close {
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-.clear-all {
-  font-size: 11px;
-  color: var(--text-secondary);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
 }
 
 /* 覆盖 HexbinPage 的全屏样式，适配仪表盘 */

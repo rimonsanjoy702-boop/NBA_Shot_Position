@@ -10,10 +10,13 @@
  * All layers (floor + lines + hexbins) share ONE SVG for perfect alignment.
  */
 import { ref, computed, watch } from 'vue';
+import { useAnalysisContext, type DataSlot } from '@/stores/analysisContext';
 import type { HalfCourtSelection, HexbinCell } from './types';
 import { ALL_SEASONS } from './types';
 import { fetchHexbinSeason, extractHexbins, getAvailableTeams, getAvailablePlayers } from './hexbin-data';
 import { fgPctColorClassic } from './fgPctColorClassic';
+
+const store = useAnalysisContext();
 
 // ═══════════════════════════════════════════════════════════
 // State
@@ -25,8 +28,9 @@ const pageState = ref<PageState>('loading');
 const errorMessage = ref('');
 const errorDetail = ref('');
 
-const leftSelection = ref<HalfCourtSelection>({ scope: 'league', season: '2018-19' });
-const rightSelection = ref<HalfCourtSelection>({ scope: 'league', season: '2018-19' });
+// Derived from Store slots (source of truth for golden triangle sync)
+const leftSelection = computed<HalfCourtSelection>(() => toSelection(store.leftSlot));
+const rightSelection = computed<HalfCourtSelection>(() => toSelection(store.rightSlot));
 const leftCells = ref<HexbinCell[]>([]);
 const rightCells = ref<HexbinCell[]>([]);
 const leftTeams = ref<{ id: number; name: string; abbr: string }[]>([]);
@@ -34,6 +38,10 @@ const rightTeams = ref<{ id: number; name: string; abbr: string }[]>([]);
 const leftPlayers = ref<{ id: number; name: string }[]>([]);
 const rightPlayers = ref<{ id: number; name: string }[]>([]);
 const seasonCache = ref<Map<string, any>>(new Map());
+
+function toSelection(slot: DataSlot): HalfCourtSelection {
+  return { scope: slot.scope, season: slot.season, entityId: slot.entityId, entityLabel: slot.entityLabel };
+}
 
 // ═══════════════════════════════════════════════════════════
 // Data loading
@@ -74,8 +82,8 @@ async function refreshAll() {
   }
 }
 
-watch(leftSelection, () => refreshSide('left'), { deep: true });
-watch(rightSelection, () => refreshSide('right'), { deep: true });
+watch(() => store.leftSlot, () => refreshSide('left'), { deep: true });
+watch(() => store.rightSlot, () => refreshSide('right'), { deep: true });
 
 refreshAll();
 
@@ -91,20 +99,17 @@ function entityChoices(side: 'left' | 'right') {
 }
 
 function onScopeChange(side: 'left' | 'right', scope: 'league' | 'team' | 'player') {
-  const ref_ = side === 'left' ? leftSelection : rightSelection;
-  ref_.value = { ...ref_.value, scope, entityId: undefined };
+  store.setSlot(side, { scope, entityId: undefined, entityLabel: undefined }, 'hexbin');
 }
 
 function onEntityChange(side: 'left' | 'right', id: number) {
-  const ref_ = side === 'left' ? leftSelection : rightSelection;
   const entities = entityChoices(side);
   const entity = entities.find((e: any) => e.id === id);
-  ref_.value = { ...ref_.value, entityId: id, entityLabel: entity?.name };
+  store.setSlot(side, { entityId: id, entityLabel: entity?.name }, 'hexbin');
 }
 
 function onSeasonChange(side: 'left' | 'right', season: string) {
-  const ref_ = side === 'left' ? leftSelection : rightSelection;
-  ref_.value = { ...ref_.value, season };
+  store.setSlot(side, { season }, 'hexbin');
 }
 
 const layerLoading = computed(() => pageState.value === 'loading');
