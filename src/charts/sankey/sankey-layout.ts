@@ -147,28 +147,38 @@ export function computeLayout(
     nodeMap.set(n.id, n)
   }
 
-  // 2. Precompute total outgoing / incoming per node
+  // 2. Merge links by (source, target) pair — sum values
+  const merged: Record<string, { source: string; target: string; value: number }> = {}
+  for (const link of rawLinks) {
+    const key = `${link.source}::${link.target}`
+    if (merged[key]) {
+      merged[key].value += link.value
+    } else {
+      merged[key] = { source: link.source, target: link.target, value: link.value }
+    }
+  }
+  const mergedLinks = Object.values(merged)
+
+  // 3. Precompute total outgoing / incoming per node (from merged links)
   const totalOut: Record<string, number> = {}
   const totalIn: Record<string, number> = {}
-  for (const link of rawLinks) {
+  for (const link of mergedLinks) {
     totalOut[link.source] = (totalOut[link.source] || 0) + link.value
     totalIn[link.target]  = (totalIn[link.target]  || 0) + link.value
   }
 
-  // 3. Track cumulative offsets per node for stacking ribbons
-  //    outOffset[id] = current y-fraction of source node covered so far
-  //    inOffset[id]  = current y-fraction of target node covered so far
+  // 4. Track cumulative offsets per node for stacking ribbons
   const outOffset: Record<string, number> = {}
   const inOffset: Record<string, number> = {}
 
   const positionedLinks: SankeyLinkLayout[] = []
 
-  for (const link of rawLinks) {
+  for (const link of mergedLinks) {
     const srcNode = nodeMap.get(link.source)
     const tgtNode = nodeMap.get(link.target)
     if (!srcNode || !tgtNode) continue
 
-    // Vertical span on source (proportional to flow / total outgoing)
+    // Vertical span on source
     const srcFraction = totalOut[link.source] > 0
       ? link.value / totalOut[link.source]
       : 0
@@ -176,7 +186,7 @@ export function computeLayout(
     const srcY1 = srcY0 + srcNode.height * srcFraction
     outOffset[link.source] = (outOffset[link.source] || 0) + srcFraction
 
-    // Vertical span on target (proportional to flow / total incoming)
+    // Vertical span on target
     const tgtFraction = totalIn[link.target] > 0
       ? link.value / totalIn[link.target]
       : 0
@@ -184,7 +194,6 @@ export function computeLayout(
     const tgtY1 = tgtY0 + tgtNode.height * tgtFraction
     inOffset[link.target] = (inOffset[link.target] || 0) + tgtFraction
 
-    // Source right edge, target left edge
     const sx = srcNode.x + COL_W[srcNode.layer - 1]
     const tx = tgtNode.x
 
@@ -206,7 +215,7 @@ export function computeLayout(
       value: link.value,
       path,
       color,
-      width: 0,       // not used when drawing filled ribbons
+      width: 0,
       opacity: 'full',
     })
   }
