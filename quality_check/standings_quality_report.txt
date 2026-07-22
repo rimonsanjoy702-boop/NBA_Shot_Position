@@ -1,0 +1,26 @@
+========================================================================
+NBA Team Season Standings -- Quality Report
+========================================================================
+Source:       stats.nba.com (nba_api, subprocess-per-season)
+Seasons:      1997-98 ~ 2022-23 (26 total)
+Rows:         773
+Timestamp:    2026-07-22T04:20:01.257503+00:00
+Fetch time:   44.9s (0.7 min)
+Mode:         subprocess-per-season isolation (temp-file IPC)
+
+------------------------------------------------------------------------
+Summary: 7/7 checks passed
+
+Q1 Season coverage: 26/26 seasons OK
+Q2 Team counts:     OK
+Q3 Games played:    OK
+Q4 WinPCT validation: out-of-range=0, calc-mismatch=0
+Q5 Team ID alignment: {'csv_teams': 30, 'api_teams': 30, 'common': 30, 'only_csv': [], 'only_api': []}
+Q6 Missing values:  none
+Q7 Row count:       773 (expected 754-780) OK
+
+------------------------------------------------------------------------
+Verdict: PASS -- data ready for preprocessing.
+------------------------------------------------------------------------
+
+========================================================================
