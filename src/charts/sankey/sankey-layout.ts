@@ -210,7 +210,7 @@ export function computeLayout(
       color = L1_C[srcNode.meta?.time_index ?? 0] || L1_C[0]
     } else if (srcNode.layer === 2) {
       const zk = srcNode.id.replace('L2_', '')
-      const L2_C: Record<string,string> = {RA:'#C4CED4',Paint:'#00B2A9',MR:'#F51B6D',LC3:'#F58220',RC3:'#1D428A',AB3:'#FFC72C',BC:'#007A33'}
+      const L2_C: Record<string,string> = {RA:'#FFB347',Paint:'#FF8C00',MR:'#FF6A00',LC3:'#FF4D00',RC3:'#FF2400',AB3:'#FF0F33',BC:'#FF0055'}
       color = L2_C[zk] || '#C4CED4'
     } else {
       const ak = srcNode.id.replace('L3_', '')

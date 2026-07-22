@@ -167,15 +167,15 @@ const L1_COLORS = [
   '#43BEE5',  // Q4后 — 南海岸蓝
 ]
 
-/** L2: Spurs → Warriors → Celtics (7 shot zones) */
+/** L2: orange→red gradient (7 shot zones) */
 const L2_COLORS: Record<string, string> = {
-  'RA':    '#C4CED4',  // Restricted Area — 马刺银灰
-  'Paint': '#00B2A9',  // Paint (Non-RA) — Fiesta青
-  'MR':    '#F51B6D',  // Mid-Range — Fiesta粉
-  'LC3':   '#F58220',  // Left Corner 3 — Fiesta橙
-  'RC3':   '#1D428A',  // Right Corner 3 — 勇士蓝
-  'AB3':   '#FFC72C',  // Above the Break 3 — 勇士黄
-  'BC':    '#007A33',  // Backcourt — 凯尔特人绿
+  'RA':    '#FFB347',  // Restricted Area — 亮橙黄
+  'Paint': '#FF8C00',  // Paint (Non-RA) — 标准橙
+  'MR':    '#FF6A00',  // Mid-Range — 橘红色
+  'LC3':   '#FF4D00',  // Left Corner 3 — 朱红色
+  'RC3':   '#FF2400',  // Right Corner 3 — 鲜红色
+  'AB3':   '#FF0F33',  // Above the Break 3 — 亮绯红
+  'BC':    '#FF0055',  // Backcourt — 玫瑰红
 }
 
 /** L3: Bulls → Cavaliers → Rockets (5 action types) */
