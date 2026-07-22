@@ -233,28 +233,6 @@ loadData()
       @select-outcome="onSelectOutcome"
     />
 
-    <!-- Stats summary -->
-    <div v-if="loadingState === 'ready'" class="stats-row">
-      <div class="stat-card">
-        <div class="stat-num">{{ nodes.filter(n => n.layer===2).reduce((s,n)=>s+n.size,0).toLocaleString() }}</div>
-        <div class="stat-label">总出手</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num">
-          {{ (() => { const m = nodes.find(n=>n.id==='L4_Made'); const t = nodes.find(n=>n.id==='L4_Missed'); const total = (m?.size||0)+(t?.size||0); return total>0 ? ((m?.size||0)/total*100).toFixed(1)+'%' : '--' })() }}
-        </div>
-        <div class="stat-label">总命中率</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num">{{ links.length }}</div>
-        <div class="stat-label">有效路径</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num">{{ nodes.length }}</div>
-        <div class="stat-label">活跃节点</div>
-      </div>
-    </div>
-
     <!-- Error state -->
     <div v-if="loadingState === 'error'" class="error-box">
       <span>⚠️ {{ errorMessage }}</span>
@@ -405,33 +383,6 @@ loadData()
   border: none;
   cursor: pointer;
   text-decoration: underline;
-}
-
-/* ===== Stats row ===== */
-.stats-row {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-}
-
-.stat-card {
-  text-align: center;
-  padding: 12px 24px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 8px;
-}
-
-.stat-num {
-  font-size: 20px;
-  font-weight: 700;
-  color: #e6edf3;
-}
-
-.stat-label {
-  font-size: 11px;
-  color: #8b949e;
-  margin-top: 2px;
 }
 
 /* ===== Error ===== */

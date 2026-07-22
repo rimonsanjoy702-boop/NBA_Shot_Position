@@ -362,38 +362,13 @@ const COLUMN_HEADERS = [
           <!-- Node label -->
           <text
             :x="node.x + colWidth(node.layer) / 2"
-            :y="node.y + node.height / 2 - 4"
+            :y="node.y + node.height / 2 + 4"
             text-anchor="middle"
             :fill="node.layer === 4 ? '#fff' : '#e6edf3'"
             font-size="11"
             font-weight="500"
           >
-            {{ node.label }}
-          </text>
-
-          <!-- Node size label -->
-          <text
-            v-if="node.height > 24"
-            :x="node.x + colWidth(node.layer) / 2"
-            :y="node.y + node.height / 2 + 12"
-            text-anchor="middle"
-            fill="#8b949e"
-            font-size="9"
-          >
-            {{ fmtCount(node.size) }}
-          </text>
-
-          <!-- L2 FG% indicator -->
-          <text
-            v-if="node.layer === 2 && node.meta?.fg_pct !== undefined && node.height > 36"
-            :x="node.x + colWidth(node.layer) / 2"
-            :y="node.y + node.height / 2 + 26"
-            text-anchor="middle"
-            :fill="node.meta.fg_pct >= 0.50 ? '#00B42A' : '#8b949e'"
-            font-size="10"
-            font-weight="600"
-          >
-            {{ (node.meta.fg_pct * 100).toFixed(1) }}%
+            {{ getNodeLabel(node) }}
           </text>
         </g>
       </g>
@@ -430,24 +405,46 @@ function colWidth(layer: number): number {
   return w[layer - 1] ?? 100
 }
 
-/** Format count for display */
-function fmtCount(n: number): string {
-  if (n >= 10000) return (n / 10000).toFixed(1) + '万'
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
-  return String(n)
+/** Chinese labels for node ids */
+const CN_LABELS: Record<string, string> = {
+  // L1 — time bins (from design doc §3.1)
+  'L1_0': 'Q1前段', 'L1_1': 'Q1后段', 'L1_2': 'Q2前段', 'L1_3': 'Q2后段',
+  'L1_4': 'Q3前段', 'L1_5': 'Q3后段', 'L1_6': 'Q4前段', 'L1_7': 'Q4后段',
+  // L2 — shot zones (from design doc §3.2)
+  'L2_RA':    '篮下禁区',
+  'L2_Paint': '禁区内',
+  'L2_MR':    '中距离',
+  'L2_LC3':   '左底角三分',
+  'L2_RC3':   '右底角三分',
+  'L2_AB3':   '弧顶三分',
+  'L2_BC':    '后场',
+  // L3 — action types (from design doc §3.3)
+  'L3_Dunk':  '扣篮',
+  'L3_Layup': '上篮',
+  'L3_Jump':  '跳投',
+  'L3_Hook':  '勾手',
+  'L3_Tip':   '补篮',
+  // L4 — outcomes
+  'L4_Made':   '命中',
+  'L4_Missed': '不中',
+}
+
+function getNodeLabel(node: SankeyNode): string {
+  return CN_LABELS[node.id] || node.label
 }
 
 /** Generate tooltip text for a node */
 function nodeTooltip(node: SankeyNode): string {
+  const label = getNodeLabel(node)
   const count = node.size.toLocaleString()
   if (node.layer === 2 && node.meta?.fg_pct !== undefined) {
     const fg = (node.meta.fg_pct * 100).toFixed(1)
-    return `${node.label}: ${count} 出手, FG% ${fg}%`
+    return `${label}: ${count} 出手, FG% ${fg}%`
   }
   if (node.layer === 4) {
-    return `${node.label}: ${count} 次`
+    return `${label}: ${count} 次`
   }
-  return `${node.label}: ${count} 出手`
+  return `${label}: ${count} 出手`
 }
 </script>
 
