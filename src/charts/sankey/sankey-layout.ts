@@ -58,10 +58,19 @@ export function layoutNodes(nodes: SankeyNode[]): SankeyNodeLayout[] {
     const totalGaps = (layerNodes.length - 1) * NODE_GAP
     const availableH = USABLE_H - totalGaps
 
-    // Sort: L1 by time_index, L4 Made then Missed, others stable
+    // Sort: L1 by time_index, L2 by ZONE_ORDER, L3 by ACTION_ORDER, L4 Made then Missed
+    const ZONE_ORDER = ['L2_RA','L2_Paint','L2_MR','L2_LC3','L2_RC3','L2_AB3','L2_BC']
+    const ACTION_ORDER = ['L3_Dunk','L3_Layup','L3_Jump','L3_Hook','L3_Tip']
+
     layerNodes.sort((a, b) => {
-      if (a.meta?.time_index !== undefined && b.meta?.time_index !== undefined) {
-        return a.meta.time_index - b.meta.time_index
+      if (a.layer === 1 && a.meta?.time_index !== undefined) {
+        return (a.meta.time_index ?? 0) - (b.meta.time_index ?? 0)
+      }
+      if (a.layer === 2) {
+        return ZONE_ORDER.indexOf(a.id) - ZONE_ORDER.indexOf(b.id)
+      }
+      if (a.layer === 3) {
+        return ACTION_ORDER.indexOf(a.id) - ACTION_ORDER.indexOf(b.id)
       }
       if (a.layer === 4) {
         return a.id === 'L4_Made' ? -1 : 1
