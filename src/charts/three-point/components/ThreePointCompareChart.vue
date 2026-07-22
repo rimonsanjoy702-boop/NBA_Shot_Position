@@ -27,20 +27,29 @@
     <!-- ── 图例卡片 ── -->
     <div class="legend-panel">
       <div class="legend-row">
-        <span class="legend-hint">实线 = 三分出手占比 | 虚线 = 常规赛胜率</span>
-        <div class="legend-cards">
-          <div class="group-card">
-            <span class="group-line solid" style="--lc:#e63946"></span>
-            <span class="group-name">先行者 14队</span>
-          </div>
-          <div class="group-card">
-            <span class="group-line dashed" style="--lc:#f4a261"></span>
-            <span class="group-name">过渡组 4队</span>
-          </div>
-          <div class="group-card">
-            <span class="group-line dashed" style="--lc:#457b9d"></span>
-            <span class="group-name">落后者 19队</span>
-          </div>
+        <div class="legend-left">
+          <span class="legend-item">
+            <span class="legend-line solid" style="--lc:#e63946"></span>
+            <span class="legend-text">先行者 leader（6队）</span>
+          </span>
+          <span class="legend-item">
+            <span class="legend-line dashed" style="--lc:#457b9d"></span>
+            <span class="legend-text">落后者 laggard（7队）</span>
+          </span>
+          <span class="legend-item">
+            <span class="legend-line dashed" style="--lc:#f4a261"></span>
+            <span class="legend-text">过渡组 mid（17队）</span>
+          </span>
+        </div>
+        <div class="legend-right">
+          <span class="legend-item">
+            <span class="legend-line vline" style="--lc:#e63946"></span>
+            <span class="legend-text">2014-15 先行者窗口终点</span>
+          </span>
+          <span class="legend-item">
+            <span class="legend-line vline" style="--lc:#457b9d"></span>
+            <span class="legend-text">2018-19 落后者转型起点</span>
+          </span>
         </div>
       </div>
     </div>
@@ -526,38 +535,48 @@ onUnmounted(() => {
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
-  padding: var(--space-md) var(--space-md) var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
 }
 .legend-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
 }
-.legend-hint {
-  font-size: var(--fs-caption, 11px);
-  color: var(--text-tertiary, #5c6670);
-}
-.legend-cards {
+.legend-left {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 16px;
 }
-.group-card {
+.legend-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.legend-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  white-space: nowrap;
 }
-.group-line {
+.legend-line {
   display: inline-block;
   width: 28px;
   height: 0;
   border-top: 3px solid var(--lc);
+  flex-shrink: 0;
 }
-.group-line.dashed {
+.legend-line.dashed {
   border-top-style: dashed;
 }
-.group-name {
-  color: var(--text-primary, #e6edf3);
-  font-weight: 600;
+.legend-line.vline {
+  width: 0;
+  height: 16px;
+  border-top: none;
+  border-left: 2px dashed var(--lc);
+}
+.legend-text {
+  font-size: var(--fs-caption, 11px);
+  color: var(--text-secondary, #8b949e);
 }
 </style>
