@@ -40,6 +40,22 @@ MIN_COUNT_LEAGUE = 5
 MIN_COUNT_TEAM   = 5
 MIN_COUNT_PLAYER = 3
 
+# Player whitelist — only these 12 iconic players (design doc §5.5)
+PLAYER_WHITELIST = {
+    201939: "Stephen Curry",
+    2544:   "LeBron James",
+    893:    "Michael Jordan",
+    977:    "Kobe Bryant",
+    201935: "James Harden",
+    201142: "Kevin Durant",
+    202691: "Klay Thompson",
+    203081: "Damian Lillard",
+    406:    "Shaquille O'Neal",
+    2730:   "Dwight Howard",
+    202695: "Kawhi Leonard",
+    201572: "Brook Lopez",
+}
+
 # ============================================================================
 # Helpers
 # ============================================================================
@@ -249,10 +265,12 @@ def build_aggregates():
 
             league[(season, side, tb, zone, action, outcome)] += 1
             team[(season, tid, side, tb, zone, action, outcome)] += 1
-            player[(season, pid, side, tb, zone, action, outcome)] += 1
-            if pid not in player_meta:
+            # Only aggregate players in the whitelist (§5.5)
+            if pid in PLAYER_WHITELIST:
+                player[(season, pid, side, tb, zone, action, outcome)] += 1
+            if pid in PLAYER_WHITELIST and pid not in player_meta:
                 player_meta[pid] = {"name": pname, "team_id": tid}
-            else:
+            elif pid in PLAYER_WHITELIST:
                 player_meta[pid]["name"] = pname
                 player_meta[pid]["team_id"] = tid
             kept_rows += 1
