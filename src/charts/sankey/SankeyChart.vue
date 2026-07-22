@@ -147,51 +147,49 @@ function hideTooltip() {
 }
 
 // ============================================================================
-// Colors — per-layer ordinal/categorical scheme
+// Colors — NBA team-inspired palette per layer
 //
-// L1 (time, 8 nodes):    orange-red ramp — warm, sequential feel (Q1→Q4)
-// L2 (zone, 7 nodes):    blue-green ramp — cool, distinct from L1, preserves zone identity
-// L3 (action, 5 nodes):  violet-purple ramp — clearly separate from L1 and L2
-// L4 (result, 2 nodes):  status green (Made) / status red (Missed)
-//
-// Each layer has its own distinct hue family; within each layer, darker = later/more
+// L1 (time, 8 nodes): Lakers (Purple→Gold) → Knicks (Orange→Blue) → Heat (Red→Yellow→Pink→Cyan)
+// L2 (zone, 7 nodes):  Spurs (Silver→Fiesta Teal/Pink/Orange) → Warriors (Blue→Yellow) → Celtics (Green)
+// L3 (action, 5 nodes): Bulls (Red→Flag Blue) → Cavaliers (Wine→Gold) → Rockets (Mustard)
+// L4 (result, 2 nodes): status green (Made) / status red (Missed)
 // ============================================================================
 
-/** L1: warm orange-red palette (8 time bins, Q1前 → Q4后 step darker) */
+/** L1: 8 time bins — Lakers→Knicks→Heat */
 const L1_COLORS = [
-  '#F8A47E',  // Q1前 — lightest
-  '#F28E6B',  // Q1后
-  '#E67A55',  // Q2前
-  '#D96942',  // Q2后
-  '#C95A34',  // Q3前
-  '#B44B27',  // Q3后
-  '#9E3E1D',  // Q4前
-  '#83341C',  // Q4后 — darkest
+  '#552583',  // Q1前 — Lakers 紫
+  '#FDB927',  // Q1后 — Lakers 金
+  '#F58426',  // Q2前 — Knicks 橙
+  '#006BB6',  // Q2后 — Knicks 蓝
+  '#98002E',  // Q3前 — Heat 经典红
+  '#F9A01B',  // Q3后 — Heat 经典黄
+  '#F9429E',  // Q4前 — Heat 南海岸粉
+  '#43BEE5',  // Q4后 — Heat 南海岸蓝
 ]
 
-/** L2: blue-green palette (7 zones, court→perimeter) */
+/** L2: 7 shot zones — Spurs→Warriors→Celtics */
 const L2_COLORS: Record<string, string> = {
-  'RA':    '#3987E5',  // blue — Restricted Area (paint dominance)
-  'Paint': '#5B9BD5',  // lighter blue — Paint (Non-RA)
-  'MR':    '#199E70',  // teal-green — Mid-Range
-  'LC3':   '#3A9D7A',  // green — Left Corner 3
-  'RC3':   '#2D8F6E',  // deeper green — Right Corner 3
-  'AB3':   '#1D7A5C',  // darkest green — Above the Break 3
-  'BC':    '#6B7D8F',  // slate gray — Backcourt
+  'RA':    '#C4CED4',  // Spurs 经典银灰
+  'Paint': '#00B2A9',  // Spurs Fiesta Teal
+  'MR':    '#F51B6D',  // Spurs Fiesta Pink
+  'LC3':   '#F58220',  // Spurs Fiesta Orange
+  'RC3':   '#1D428A',  // Warriors Royal Blue
+  'AB3':   '#FFC72C',  // Warriors Golden Yellow
+  'BC':    '#007A33',  // Celtics Kelly Green
 }
 
-/** L3: violet-purple palette (5 action types) */
+/** L3: 5 action types — Bulls→Cavaliers→Rockets */
 const L3_COLORS: Record<string, string> = {
-  'Dunk':  '#A398D9',  // light violet — Dunk (explosive)
-  'Layup': '#8C81C8',  // medium violet — Layup
-  'Jump':  '#7567B2',  // mid violet — Jump Shot
-  'Hook':  '#5E5098',  // deeper violet — Hook Shot
-  'Tip':   '#4C3F85',  // darkest violet — Tip-In
+  'Dunk':  '#CE1141',  // Bulls Classic Red
+  'Layup': '#418FDE',  // Bulls Flag Blue
+  'Hook':  '#860038',  // Cavaliers Wine Red
+  'Tip':   '#FDBB30',  // Cavaliers Gold
+  'Jump':  '#F3C000',  // Rockets Mustard
 }
 
 /** L4: status colors */
-const L4_MADE_COLOR   = '#22C55E'  // green
-const L4_MISSED_COLOR = '#EF4444'  // red
+const L4_MADE_COLOR   = '#22C55E'
+const L4_MISSED_COLOR = '#EF4444'
 
 const NODE_STROKE = 'rgba(255,255,255,0.12)'
 const NODE_STROKE_HOVER = 'rgba(255,255,255,0.6)'
