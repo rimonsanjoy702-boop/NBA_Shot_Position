@@ -57,14 +57,16 @@ async function loadSeason(season: string): Promise<any> {
 async function refreshSide(side: 'left' | 'right') {
   const sel = side === 'left' ? leftSelection.value : rightSelection.value;
   const data = await loadSeason(sel.season);
+  // S6: only active side gets time-filtered — inactive side shows full data (visually dimmed)
+  const timeBin = (side === store.activeSide) ? store.selectedTimeBin : null;
   if (side === 'left') {
     leftTeams.value = getAvailableTeams(data);
     leftPlayers.value = getAvailablePlayers(data);
-    leftCells.value = extractHexbins(data, sel.scope, sel.entityId, store.selectedTimeBin);
+    leftCells.value = extractHexbins(data, sel.scope, sel.entityId, timeBin);
   } else {
     rightTeams.value = getAvailableTeams(data);
     rightPlayers.value = getAvailablePlayers(data);
-    rightCells.value = extractHexbins(data, sel.scope, sel.entityId, store.selectedTimeBin);
+    rightCells.value = extractHexbins(data, sel.scope, sel.entityId, timeBin);
   }
 }
 
@@ -83,10 +85,9 @@ async function refreshAll() {
 }
 
 // Watch time bin changes → re-extract with time filter (S6, T1)
-watch(() => store.selectedTimeBin, () => {
-  refreshSide('left');
-  refreshSide('right');
-});
+watch(() => store.selectedTimeBin, () => refreshAll());
+// Watch activeSide changes → re-extract to apply per-side time-filter / dim rules
+watch(() => store.activeSide, () => refreshAll());
 
 watch(() => store.leftSlot, () => refreshSide('left'), { deep: true });
 watch(() => store.rightSlot, () => refreshSide('right'), { deep: true });
@@ -175,12 +176,41 @@ function countToRadius(count: number, ext: { min: number; max: number }): number
   return SIZE_MIN + t * (SIZE_MAX - SIZE_MIN);
 }
 
+// ═══════════════════════════════════════════════════════════
+// Zone matching for S9 — §8.4 桑基 L2 → Hexbin 区域几何映射
+// cell.x / cell.y are in viewBox px (1ft=10px), relative to basket
+// ═══════════════════════════════════════════════════════════
+
+function cellMatchesZone(cell: HexbinCell, zoneId: string): boolean {
+  const { x, y } = cell
+  const d = Math.sqrt(x * x + y * y)
+
+  // Restricted Area: √(x²+y²) ≤ 40 (= 4ft × 10px/ft)
+  const inRA = d <= 40
+  // Paint (Non-RA): |x| ≤ 80 ∧ y ≤ 140, excluding RA
+  const inPaintNonRA = !inRA && Math.abs(x) <= 80 && y <= 140
+  // Mid-Range: everything inside the court, not RA/Paint, y ≤ 230
+  const inMid = !inRA && !inPaintNonRA && y <= 230
+
+  switch (zoneId) {
+    case 'L2_RA':    return inRA
+    case 'L2_Paint': return inPaintNonRA
+    case 'L2_MR':    return inMid
+    case 'L2_LC3':   return y > 230 && x < -220
+    case 'L2_RC3':   return y > 230 && x > 220
+    case 'L2_AB3':   return y > 230 && Math.abs(x) <= 220
+    case 'L2_BC':    return y > 470
+    default:         return false
+  }
+}
+
 interface HexItem {
   key: string;
   p: string;
   color: string;
   r: number;
   tip: string;
+  dimmed: boolean;
 }
 
 const leftHexItems = computed<HexItem[]>(() => buildHexItems(leftCells.value, 'left'));
@@ -188,6 +218,10 @@ const rightHexItems = computed<HexItem[]>(() => buildHexItems(rightCells.value, 
 
 function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
   const ext = countExt(cells);
+  const isActive = side === store.activeSide;
+  const timeBin = store.selectedTimeBin;
+  const zone = store.selectedZone;
+
   return cells
     .map(cell => {
       const vx = side === 'left' ? L_BASKET_X + cell.y : R_BASKET_X - cell.y;
@@ -200,7 +234,21 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
         const a = (Math.PI / 180) * (60 * i - 30);
         pts.push(`${(vx + r * Math.cos(a)).toFixed(2)},${(vy + r * Math.sin(a)).toFixed(2)}`);
       }
-      return { key: `${side}-${cell.x}-${cell.y}`, p: pts.join(' '), color, r, tip };
+
+      // ── Per-cell dimming rules (S6 + S9) ──
+      let dimmed = false
+
+      // S6: time bin selected → inactive side dims (active side shows filtered data)
+      if (timeBin != null && !isActive) {
+        dimmed = true
+      }
+
+      // S9: zone selected → non-matching cells dim; matching cells always bright
+      if (zone != null) {
+        dimmed = !cellMatchesZone(cell, zone)
+      }
+
+      return { key: `${side}-${cell.x}-${cell.y}`, p: pts.join(' '), color, r, tip, dimmed };
     })
     .sort((a, b) => b.r - a.r);
 }
@@ -324,6 +372,13 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
 
         <!-- ═══════════════════ HEXBIN OVERLAYS ═══════════════════ -->
         <defs>
+          <!-- S9 dim filter — desaturate + low opacity for non-matching cells -->
+          <filter id="hex-dim-filter">
+            <feColorMatrix type="saturate" values="0.08" />
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.35" />
+            </feComponentTransfer>
+          </filter>
           <clipPath id="clip-left">
             <rect :x="COURT_L" :y="COURT_T" :width="MIDCOURT_X - COURT_L" :height="COURT_B - COURT_T" />
           </clipPath>
@@ -335,16 +390,26 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
         <!-- Left hexbins -->
         <g v-if="leftCells.length > 0 && !layerLoading" clip-path="url(#clip-left)">
           <g v-for="h in leftHexItems" :key="h.key" class="hex-cell">
-            <title>{{ h.tip }}</title>
-            <polygon :points="h.p" :fill="h.color" opacity="0.8" />
+            <title>{{ h.tip }}{{ h.dimmed ? ' [dim]' : '' }}</title>
+            <polygon
+              :points="h.p"
+              :fill="h.color"
+              :opacity="h.dimmed ? 0.2 : 0.8"
+              :filter="h.dimmed ? 'url(#hex-dim-filter)' : undefined"
+            />
           </g>
         </g>
 
         <!-- Right hexbins -->
         <g v-if="rightCells.length > 0 && !layerLoading" clip-path="url(#clip-right)">
           <g v-for="h in rightHexItems" :key="h.key" class="hex-cell">
-            <title>{{ h.tip }}</title>
-            <polygon :points="h.p" :fill="h.color" opacity="0.8" />
+            <title>{{ h.tip }}{{ h.dimmed ? ' [dim]' : '' }}</title>
+            <polygon
+              :points="h.p"
+              :fill="h.color"
+              :opacity="h.dimmed ? 0.2 : 0.8"
+              :filter="h.dimmed ? 'url(#hex-dim-filter)' : undefined"
+            />
           </g>
         </g>
       </svg>
