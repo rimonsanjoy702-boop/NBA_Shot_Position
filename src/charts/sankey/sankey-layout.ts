@@ -78,9 +78,13 @@ export function layoutNodes(nodes: SankeyNode[]): SankeyNodeLayout[] {
       return 0
     })
 
+    // Minimum node height: must fit 2 lines of text (~28px) + padding
+    const MIN_NODE_HEIGHT = 32
+
     let y = V_PADDING
     for (const node of layerNodes) {
-      const height = Math.max((node.size / totalSize) * availableH, 4)
+      const proportional = (node.size / totalSize) * availableH
+      const height = Math.max(proportional, MIN_NODE_HEIGHT)
       result.push({ ...node, x: COL_X[layer - 1], y, height })
       y += height + NODE_GAP
     }
