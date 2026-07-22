@@ -29,9 +29,16 @@ export const useTimeFilterStore = defineStore('timeFilter', {
     },
     updateCurveData(data) {
       this.timeCurveData = data
-      const totalMade = data.reduce((s, i)=>s+i.all_made,0)
-      const totalShot = data.reduce((s, i)=>s+i.all_total,0)
-      this.globalAvgFG = totalShot ? (totalMade / totalShot * 100).toFixed(1) : 0
+      // 旧数据包含 all_made/all_total，新数据只有 left_shot_count/right_shot_count + 各半场 FG%
+      // globalAvgFG 用左右半场命中率和出手次数估算加权总命中率（假设每半场 2PT/3PT 各占一半）
+      let totalMade = 0, totalShot = 0
+      for (const i of data) {
+        const leftMade = (i.left_2pt / 100) * (i.left_shot_count / 2) + (i.left_3pt / 100) * (i.left_shot_count / 2)
+        const rightMade = (i.right_2pt / 100) * (i.right_shot_count / 2) + (i.right_3pt / 100) * (i.right_shot_count / 2)
+        totalMade += leftMade + rightMade
+        totalShot += i.left_shot_count + i.right_shot_count
+      }
+      this.globalAvgFG = totalShot ? +(totalMade / totalShot * 100).toFixed(1) : 0
     }
   }
 })
