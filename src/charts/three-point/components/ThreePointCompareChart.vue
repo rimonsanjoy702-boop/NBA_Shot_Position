@@ -23,6 +23,27 @@
       <h3 class="chart-title">常规赛胜率 WinPct</h3>
       <div ref="chartWinDom" class="chart-svg"></div>
     </div>
+
+    <!-- ── 图例卡片 ── -->
+    <div class="legend-panel">
+      <div class="legend-row">
+        <span class="legend-hint">实线 = 三分出手占比 | 虚线 = 常规赛胜率</span>
+        <div class="legend-cards">
+          <div class="group-card">
+            <span class="group-line solid" style="--lc:#e63946"></span>
+            <span class="group-name">先行者 14队</span>
+          </div>
+          <div class="group-card">
+            <span class="group-line dashed" style="--lc:#f4a261"></span>
+            <span class="group-name">过渡组 4队</span>
+          </div>
+          <div class="group-card">
+            <span class="group-line dashed" style="--lc:#457b9d"></span>
+            <span class="group-name">落后者 19队</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -498,5 +519,45 @@ onUnmounted(() => {
   display: block;
   width: 100%;
   height: auto;
+}
+
+/* ── 图例卡片 ── */
+.legend-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.legend-hint {
+  font-size: var(--fs-caption, 11px);
+  color: var(--text-tertiary, #5c6670);
+}
+.legend-cards {
+  display: flex;
+  gap: 12px;
+}
+.group-card {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+.group-line {
+  display: inline-block;
+  width: 28px;
+  height: 0;
+  border-top: 3px solid var(--lc);
+}
+.group-line.dashed {
+  border-top-style: dashed;
+}
+.group-name {
+  color: var(--text-primary, #e6edf3);
+  font-weight: 600;
 }
 </style>
