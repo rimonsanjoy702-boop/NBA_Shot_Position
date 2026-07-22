@@ -359,14 +359,23 @@ const COLUMN_HEADERS = [
             @mouseleave="hoveredNode = null"
           />
 
-          <!-- Node label -->
+          <!-- Node label: line 1 = English name from data, line 2 = Chinese translation -->
           <text
             :x="node.x + colWidth(node.layer) / 2"
-            :y="node.y + node.height / 2 + 4"
+            :y="node.y + node.height / 2 - 2"
             text-anchor="middle"
             :fill="node.layer === 4 ? '#fff' : '#e6edf3'"
-            font-size="11"
+            font-size="10"
             font-weight="500"
+          >
+            {{ node.label }}
+          </text>
+          <text
+            :x="node.x + colWidth(node.layer) / 2"
+            :y="node.y + node.height / 2 + 13"
+            text-anchor="middle"
+            fill="#8b949e"
+            font-size="9"
           >
             {{ getNodeLabel(node) }}
           </text>
