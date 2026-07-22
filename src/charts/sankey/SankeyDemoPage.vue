@@ -1,17 +1,17 @@
 <script setup lang="ts">
 /**
- * SankeyDemoPage.vue — Minimal demo page for the sankey chart.
+ * SankeyDemoPage.vue — Demo page for the sankey chart.
  *
- * Features:
- *   - Season selector (23 seasons)
- *   - Court side selector (all / left / right)
- *   - Scope selector (league only for now; team/player later)
- *   - SankeyChart component with L1 click handling
+ * Controls:
+ *   - Court side: left / right (two-option toggle)
+ *   - Season: dropdown (23 seasons)
+ *   - Scope: dropdown (league / team / player)
+ *   - Entity: dropdown (shown when scope is team or player)
  */
 
-import { ref, computed, watch } from 'vue'
-import { fetchSankeySeason, extractSankeyData } from './sankey-data'
-import type { SankeySeasonData, SankeyNode, SankeyLink, LoadingState, CourtSide, Scope } from './types'
+import { ref, computed, watch, shallowRef } from 'vue'
+import { fetchSankeySeason, extractSankeyData, getAvailableTeams, getAvailablePlayers } from './sankey-data'
+import type { SankeySeasonData, SankeyNode, SankeyLink, LoadingState, CourtSide, Scope, EntityOption } from './types'
 import { ALL_SEASONS } from './types'
 import SankeyChart from './SankeyChart.vue'
 
@@ -20,7 +20,7 @@ import SankeyChart from './SankeyChart.vue'
 // ============================================================================
 
 const season = ref('2014-15')
-const courtSide = ref<CourtSide>('all')
+const courtSide = ref<CourtSide>('left')
 const scope = ref<Scope>('league')
 const entityId = ref<number | undefined>(undefined)
 
@@ -31,6 +31,10 @@ const seasonData = ref<SankeySeasonData | null>(null)
 const nodes = ref<SankeyNode[]>([])
 const links = ref<SankeyLink[]>([])
 
+// Entity list for the current season
+const teams = shallowRef<EntityOption[]>([])
+const players = shallowRef<EntityOption[]>([])
+
 // Interaction state by layer
 const selectedTimeBin = ref<number>(-1)
 const selectedZone = ref<string | null>(null)
@@ -38,15 +42,22 @@ const selectedAction = ref<string | null>(null)
 const selectedOutcome = ref<string | null>(null)
 
 // ============================================================================
-// Title
+// Derived
 // ============================================================================
 
+const entityOptions = computed(() => scope.value === 'team' ? teams.value : players.value)
+
 const title = computed(() => {
-  let t = `投篮结构 · ${season.value}`
-  if (scope.value === 'league') t += ' · 联盟'
-  else if (scope.value === 'team') t += ' · 球队'
-  else t += ' · 球员'
-  return t
+  const sideLabel = courtSide.value === 'left' ? '左半场' : '右半场'
+  let scopeLabel = '联盟'
+  if (scope.value === 'team') {
+    const team = teams.value.find(t => t.id === entityId.value)
+    scopeLabel = team ? team.name : '球队'
+  } else if (scope.value === 'player') {
+    const player = players.value.find(p => p.id === entityId.value)
+    scopeLabel = player ? player.name : '球员'
+  }
+  return `投篮结构 · ${season.value} · ${sideLabel} · ${scopeLabel}`
 })
 
 // ============================================================================
@@ -58,6 +69,8 @@ async function loadData() {
   errorMessage.value = ''
   try {
     seasonData.value = await fetchSankeySeason(season.value)
+    teams.value = getAvailableTeams(seasonData.value)
+    players.value = getAvailablePlayers(seasonData.value)
     refreshExtraction()
   } catch (e: any) {
     errorMessage.value = e.message || '加载失败'
@@ -85,7 +98,11 @@ function refreshExtraction() {
 
 watch(season, () => { loadData() })
 watch(courtSide, () => { refreshExtraction() })
-watch(scope, () => { refreshExtraction() })
+watch(scope, () => {
+  entityId.value = undefined
+  refreshExtraction()
+})
+watch(entityId, () => { refreshExtraction() })
 
 // ============================================================================
 // Event handlers
@@ -107,6 +124,13 @@ function onSelectOutcome(id: string) {
   selectedOutcome.value = selectedOutcome.value === id ? null : id
 }
 
+function clearAll() {
+  selectedTimeBin.value = -1
+  selectedZone.value = null
+  selectedAction.value = null
+  selectedOutcome.value = null
+}
+
 // ============================================================================
 // Init
 // ============================================================================
@@ -124,19 +148,42 @@ loadData()
 
     <!-- Controls -->
     <div class="controls-row">
-      <!-- Court side -->
+      <!-- Court side: left / right only -->
       <div class="control-group">
         <span class="control-label">半场</span>
         <div class="side-tabs">
           <button
-            v-for="s in (['all','left','right'] as const)"
-            :key="s"
-            :class="['side-tab', { active: courtSide === s }]"
-            @click="courtSide = s"
-          >
-            {{ s === 'all' ? '全部' : s === 'left' ? '左半场' : '右半场' }}
-          </button>
+            :class="['side-tab', { active: courtSide === 'left' }]"
+            @click="courtSide = 'left'"
+          >左半场</button>
+          <button
+            :class="['side-tab', { active: courtSide === 'right' }]"
+            @click="courtSide = 'right'"
+          >右半场</button>
         </div>
+      </div>
+
+      <!-- Scope: dropdown -->
+      <div class="control-group">
+        <span class="control-label">粒度</span>
+        <select v-model="scope" class="scope-select">
+          <option value="league">联盟</option>
+          <option value="team">球队</option>
+          <option value="player">球员</option>
+        </select>
+      </div>
+
+      <!-- Entity: dropdown when scope is team/player -->
+      <div v-if="scope !== 'league'" class="control-group">
+        <span class="control-label">{{ scope === 'team' ? '球队' : '球员' }}</span>
+        <select v-model="entityId" class="entity-select">
+          <option :value="undefined">-- 请选择 --</option>
+          <option
+            v-for="e in entityOptions"
+            :key="e.id"
+            :value="e.id"
+          >{{ e.name }}</option>
+        </select>
       </div>
 
       <!-- Season -->
@@ -145,22 +192,6 @@ loadData()
         <select v-model="season" class="season-select">
           <option v-for="s in ALL_SEASONS" :key="s" :value="s">{{ s }}</option>
         </select>
-      </div>
-
-      <!-- Scope -->
-      <div class="control-group">
-        <span class="control-label">粒度</span>
-        <div class="side-tabs">
-          <button
-            v-for="sc in (['league','team','player'] as const)"
-            :key="sc"
-            :class="['side-tab', { active: scope === sc }]"
-            @click="scope = sc"
-          >
-            {{ sc === 'league' ? '联盟' : sc === 'team' ? '球队' : '球员' }}
-          </button>
-        </div>
-        <span v-if="scope !== 'league'" class="wip-badge">即将支持</span>
       </div>
     </div>
 
@@ -183,9 +214,7 @@ loadData()
         {{ selectedOutcome }}
         <button class="chip-close" @click="selectedOutcome = null">×</button>
       </span>
-      <button class="clear-all" @click="selectedTimeBin = -1; selectedZone = null; selectedAction = null; selectedOutcome = null">
-        清除全部
-      </button>
+      <button class="clear-all" @click="clearAll">清除全部</button>
     </div>
 
     <!-- Chart -->
@@ -224,6 +253,12 @@ loadData()
         <div class="stat-num">{{ nodes.length }}</div>
         <div class="stat-label">活跃节点</div>
       </div>
+    </div>
+
+    <!-- Error state -->
+    <div v-if="loadingState === 'error'" class="error-box">
+      <span>⚠️ {{ errorMessage }}</span>
+      <button class="retry-btn" @click="loadData">重试</button>
     </div>
   </div>
 </template>
@@ -304,7 +339,9 @@ loadData()
   color: #fff;
 }
 
-/* Season select */
+/* Dropdown selects */
+.scope-select,
+.entity-select,
 .season-select {
   padding: 4px 8px;
   font-size: 12px;
@@ -313,18 +350,14 @@ loadData()
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 6px;
   cursor: pointer;
+  min-width: 80px;
 }
+.entity-select { min-width: 160px; }
+.scope-select option,
+.entity-select option,
 .season-select option {
   background: #1a1f2e;
   color: #e6edf3;
-}
-
-.wip-badge {
-  font-size: 10px;
-  color: #f9c74f;
-  background: rgba(249,199,79,0.12);
-  padding: 2px 6px;
-  border-radius: 4px;
 }
 
 /* ===== Breadcrumb ===== */
@@ -351,10 +384,10 @@ loadData()
   color: #fff;
   font-size: 11px;
 }
-.time-chip { background: #e63946; }
-.zone-chip { background: #43aa8b; }
-.action-chip { background: #A0A4A8; }
-.outcome-chip { background: #3498db; }
+.time-chip { background: #d95926; }
+.zone-chip { background: #199e70; }
+.action-chip { background: #9085e9; }
+.outcome-chip { background: #3987e5; }
 
 .chip-close {
   border: none;
@@ -399,5 +432,27 @@ loadData()
   font-size: 11px;
   color: #8b949e;
   margin-top: 2px;
+}
+
+/* ===== Error ===== */
+.error-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  color: #ef4444;
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 8px;
+}
+.retry-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #e6edf3;
+  background: #3498db;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 </style>

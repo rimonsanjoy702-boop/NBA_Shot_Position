@@ -163,18 +163,20 @@ export function computeLayout(
     const tgtNode = nodeMap.get(link.target)
     if (!srcNode || !tgtNode) continue
 
-    // Color: inherit from L2 zone color
-    // For L1→L2 links: target is L2
-    // For L2→L3 links: source is L2
-    // For L3→L4 links: trace back to the L2 source via the current link's source
+    // Color: use the layer-appropriate color for link lines.
+    // L1→L2 and L2→L3: use source node's color (L2 zone blue-green → link tinted blue-green)
+    // L3→L4: use source node's color (L3 action violet → link tinted violet)
+    // This makes the flow visually follow the source layer's identity.
     let color: string
-    if (srcNode.layer === 2) {
-      color = srcNode.meta?.color || '#e0e0e0'
-    } else if (tgtNode.layer === 2) {
-      color = tgtNode.meta?.color || '#e0e0e0'
+    if (srcNode.layer === 1) {
+      // L1→L2: use L1 orange → link carries time identity
+      color = srcNode.meta?.color || '#F28E6B'
+    } else if (srcNode.layer === 2) {
+      // L2→L3: use L2 color → link carries zone identity
+      color = srcNode.meta?.color || '#199E70'
     } else {
-      // L3→L4: no zone color → use a neutral gray
-      color = '#a0a8b0'
+      // L3→L4: use L3 color → link carries action identity
+      color = '#7567B2'
     }
 
     // Width: proportional to value, min 1px, max 40px

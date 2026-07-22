@@ -147,33 +147,72 @@ function hideTooltip() {
 }
 
 // ============================================================================
-// Colors
+// Colors — per-layer ordinal/categorical scheme
+//
+// L1 (time, 8 nodes):    orange-red ramp — warm, sequential feel (Q1→Q4)
+// L2 (zone, 7 nodes):    blue-green ramp — cool, distinct from L1, preserves zone identity
+// L3 (action, 5 nodes):  violet-purple ramp — clearly separate from L1 and L2
+// L4 (result, 2 nodes):  status green (Made) / status red (Missed)
+//
+// Each layer has its own distinct hue family; within each layer, darker = later/more
 // ============================================================================
 
-/** L1 node color */
-const L1_COLOR = '#4E5969'
-const L1_COLOR_SELECTED = '#e63946'
+/** L1: warm orange-red palette (8 time bins, Q1前 → Q4后 step darker) */
+const L1_COLORS = [
+  '#F8A47E',  // Q1前 — lightest
+  '#F28E6B',  // Q1后
+  '#E67A55',  // Q2前
+  '#D96942',  // Q2后
+  '#C95A34',  // Q3前
+  '#B44B27',  // Q3后
+  '#9E3E1D',  // Q4前
+  '#83341C',  // Q4后 — darkest
+]
 
-/** L3/L4 node colors */
-const L3_COLOR = '#A0A4A8'
-const L4_MADE_COLOR = '#00B42A'
-const L4_MISSED_COLOR = '#F53F3F'
+/** L2: blue-green palette (7 zones, court→perimeter) */
+const L2_COLORS: Record<string, string> = {
+  'RA':    '#3987E5',  // blue — Restricted Area (paint dominance)
+  'Paint': '#5B9BD5',  // lighter blue — Paint (Non-RA)
+  'MR':    '#199E70',  // teal-green — Mid-Range
+  'LC3':   '#3A9D7A',  // green — Left Corner 3
+  'RC3':   '#2D8F6E',  // deeper green — Right Corner 3
+  'AB3':   '#1D7A5C',  // darkest green — Above the Break 3
+  'BC':    '#6B7D8F',  // slate gray — Backcourt
+}
+
+/** L3: violet-purple palette (5 action types) */
+const L3_COLORS: Record<string, string> = {
+  'Dunk':  '#A398D9',  // light violet — Dunk (explosive)
+  'Layup': '#8C81C8',  // medium violet — Layup
+  'Jump':  '#7567B2',  // mid violet — Jump Shot
+  'Hook':  '#5E5098',  // deeper violet — Hook Shot
+  'Tip':   '#4C3F85',  // darkest violet — Tip-In
+}
+
+/** L4: status colors */
+const L4_MADE_COLOR   = '#22C55E'  // green
+const L4_MISSED_COLOR = '#EF4444'  // red
 
 const NODE_STROKE = 'rgba(255,255,255,0.12)'
 const NODE_STROKE_HOVER = 'rgba(255,255,255,0.6)'
 
-/** Zone color for an L2 node */
-function l2Color(node: SankeyNode): string {
-  return node.meta?.color || '#A0A4A8'
-}
-
 /** Get node fill color */
 function getNodeFill(node: SankeyNode): string {
   if (node.layer === 1) {
-    return node.meta?.time_index === props.selectedTimeBin ? L1_COLOR_SELECTED : L1_COLOR
+    const idx = node.meta?.time_index ?? 0
+    if (node.meta?.time_index === props.selectedTimeBin) {
+      return '#FFFFFF'  // selected L1: white highlight
+    }
+    return L1_COLORS[idx] || L1_COLORS[0]
   }
-  if (node.layer === 2) return l2Color(node)
-  if (node.layer === 3) return L3_COLOR
+  if (node.layer === 2) {
+    const zk = node.id.replace('L2_', '')
+    return L2_COLORS[zk] || '#A0A4A8'
+  }
+  if (node.layer === 3) {
+    const ak = node.id.replace('L3_', '')
+    return L3_COLORS[ak] || '#A0A4A8'
+  }
   if (node.id === 'L4_Made') return L4_MADE_COLOR
   if (node.id === 'L4_Missed') return L4_MISSED_COLOR
   return '#A0A4A8'
@@ -181,7 +220,6 @@ function getNodeFill(node: SankeyNode): string {
 
 function getNodeBorderColor(node: SankeyNode): string {
   if (node.layer === 2 && node.meta?.fg_pct !== undefined) {
-    // Higher FG% → darker border (lower lightness)
     const fg = node.meta.fg_pct
     if (fg >= 0.55) return 'rgba(255,255,255,0.5)'
     if (fg >= 0.45) return 'rgba(255,255,255,0.35)'
