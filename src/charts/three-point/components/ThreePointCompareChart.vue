@@ -349,39 +349,6 @@ function drawChart(
       .attr("fill", cfg.stroke);
   });
 
-  // ---- Legend below chart footer ----
-  let legendX = MARGIN.left;
-  const legendY = PLOT_H + 50;
-  const groupsForLegend = [
-    { key: 'leader',  label: '先行者 14队' },
-    { key: 'mid',     label: '过渡组 4队' },
-    { key: 'laggard', label: '落后者 19队' },
-  ];
-  groupsForLegend.forEach(gc => {
-    const cfg = GROUP_CONFIG[gc.key];
-    g.append("line")
-      .attr("x1", legendX).attr("x2", legendX + 30)
-      .attr("y1", legendY).attr("y2", legendY)
-      .attr("stroke", cfg.stroke)
-      .attr("stroke-width", cfg.lw)
-      .attr("stroke-dasharray", cfg.dash ?? "none");
-    g.append("text")
-      .attr("x", legendX + 36)
-      .attr("y", legendY + 4)
-      .attr("fill", "var(--text-secondary, #8b949e)")
-      .attr("font-size", "20")
-      .text(gc.label);
-    legendX += 150;
-  });
-
-  // ---- Hint text ----
-  g.append("text")
-    .attr("x", MARGIN.left)
-    .attr("y", legendY + 24)
-    .attr("fill", "var(--text-tertiary, #5c6670)")
-    .attr("font-size", "18")
-    .text("实线 = 三分数据（3PA / 3PAr），虚线 = 常规赛胜率");
-
   // ---- Vertical reference lines ----
   VERTICAL_MARKS.forEach((vm) => {
     const vx = xScale(vm.season);
