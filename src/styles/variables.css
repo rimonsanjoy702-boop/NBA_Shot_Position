@@ -1,0 +1,42 @@
+:root {
+  --bg-root:        #0d1117;
+  --bg-card:        rgba(255,255,255,0.04);
+  --bg-card-hover:  rgba(255,255,255,0.07);
+  --bg-input:       rgba(255,255,255,0.06);
+  --bg-overlay:     rgba(0,0,0,0.75);
+
+  --border-card:    rgba(255,255,255,0.08);
+  --border-input:   rgba(255,255,255,0.12);
+  --border-hover:   rgba(255,255,255,0.25);
+  --border-active:  rgba(52,152,219,0.45);
+  --divider:        rgba(255,255,255,0.06);
+
+  --text-primary:   #e6edf3;
+  --text-secondary: #8b949e;
+  --text-tertiary:  #5c6670;
+  --text-inverse:   #0d1117;
+
+  --semantic-made:      #00d2a0;
+  --semantic-missed:    #ff6b6b;
+  --semantic-three:     #3498db;
+  --semantic-two:       #f39c12;
+  --semantic-rim:       #e74c3c;
+  --semantic-midrange:  #8b949e;
+
+  --accent-primary:     #3498db;
+  --accent-secondary:   #f39c12;
+  --accent-highlight:   #ffffff;
+  --chart-grid:         rgba(255,255,255,0.06);
+  --chart-axis:         rgba(255,255,255,0.15);
+
+  --font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body, #app {
+  height: 100%;
+  font-family: var(--font-stack);
+  background: var(--bg-root);
+  color: var(--text-primary);
+}
