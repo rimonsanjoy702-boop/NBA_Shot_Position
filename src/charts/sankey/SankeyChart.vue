@@ -155,36 +155,36 @@ function hideTooltip() {
 // L4 (result, 2 nodes):  status green (Made) / status red (Missed)
 // ============================================================================
 
-/** L1: Lakers → Knicks → Heat (8 time bins) */
+/** L1: Heat→Knicks→Lakers→Heat, warm/cool alternating (8 time bins) */
 const L1_COLORS = [
-  '#552583',  // Q1前 — 湖人紫
-  '#FDB927',  // Q1后 — 湖人金
-  '#F58426',  // Q2前 — 尼克斯橙
-  '#006BB6',  // Q2后 — 尼克斯蓝
-  '#98002E',  // Q3前 — 热火经典红
-  '#F9A01B',  // Q3后 — 热火经典黄
-  '#F9429E',  // Q4前 — 南海岸粉
-  '#43BEE5',  // Q4后 — 南海岸蓝
+  '#98002E',  // Q1前 — 热火经典红
+  '#F58426',  // Q1后 — 尼克斯橙
+  '#F9A01B',  // Q2前 — 热火经典黄
+  '#FDB927',  // Q2后 — 湖人金
+  '#43BEE5',  // Q3前 — 南海岸蓝
+  '#006BB6',  // Q3后 — 尼克斯蓝
+  '#552583',  // Q4前 — 湖人紫
+  '#F9429E',  // Q4后 — 南海岸粉
 ]
 
-/** L2: gold→magenta gradient (7 shot zones) */
+/** L2: yellow→dark red gradient (7 shot zones) */
 const L2_COLORS: Record<string, string> = {
-  'RA':    '#FFCC00',  // Restricted Area — 亮金橙
-  'Paint': '#FF8500',  // Paint (Non-RA) — 霓虹橙
-  'MR':    '#FF3C00',  // Mid-Range — 炽热朱红
-  'LC3':   '#FF0015',  // Left Corner 3 — 纯粹亮红
-  'RC3':   '#F00048',  // Right Corner 3 — 亮艳绯红
-  'AB3':   '#D60073',  // Above the Break 3 — 艳丽玫瑰
-  'BC':    '#B30086',  // Backcourt — 深邃洋红
+  'RA':    '#FFE84D',  // Restricted Area — 明亮浅黄
+  'Paint': '#FFB800',  // Paint (Non-RA) — 亮金橙
+  'MR':    '#FF7A00',  // Mid-Range — 活力橙
+  'LC3':   '#FF3300',  // Left Corner 3 — 炽热朱红
+  'RC3':   '#E60000',  // Right Corner 3 — 纯正红
+  'AB3':   '#B30005',  // Above the Break 3 — 深绯红
+  'BC':    '#800008',  // Backcourt — 经典暗红
 }
 
-/** L3: wide-span cyan→violet gradient (5 action types) */
+/** L3: pure cyan→deep blue gradient (5 action types) */
 const L3_COLORS: Record<string, string> = {
-  'Dunk':  '#00FFB3',  // 扣篮 — 荧光水光青
-  'Layup': '#00D4FF',  // 上篮 — 冰川蓝
-  'Hook':  '#007BFF',  // 勾手 — 经典电光蓝
-  'Tip':   '#3D26FF',  // 补篮 — 幽灵蓝
-  'Jump':  '#8A00FF',  // 跳投 — 赛博紫罗兰
+  'Dunk':  '#00FFCC',  // 扣篮 — 荧光薄荷青
+  'Layup': '#00BFFF',  // 上篮 — 晴空亮蓝
+  'Hook':  '#007BFF',  // 勾手 — 科技纯蓝
+  'Tip':   '#0044FF',  // 补篮 — 钴蓝色
+  'Jump':  '#0015D9',  // 跳投 — 深海纯蓝
 }
 
 /** L4: status colors */
@@ -360,7 +360,7 @@ const COLUMN_HEADERS = [
             :x="node.x + colWidth(node.layer) / 2"
             :y="node.y + node.height / 2 - 2"
             text-anchor="middle"
-            :fill="node.layer === 4 ? '#fff' : '#e6edf3'"
+            :fill="nodeTextColor(node, 'en')"
             font-size="10"
             font-weight="500"
           >
@@ -370,7 +370,7 @@ const COLUMN_HEADERS = [
             :x="node.x + colWidth(node.layer) / 2"
             :y="node.y + node.height / 2 + 13"
             text-anchor="middle"
-            fill="rgba(255,255,255,0.7)"
+            :fill="nodeTextColor(node, 'cn')"
             font-size="9"
           >
             {{ getNodeLabel(node) }}
@@ -436,6 +436,16 @@ const CN_LABELS: Record<string, string> = {
 
 function getNodeLabel(node: SankeyNode): string {
   return CN_LABELS[node.id] || node.label
+}
+
+/** Determine text color: black for bright/yellow nodes, white otherwise */
+function nodeTextColor(node: SankeyNode, line: 'en' | 'cn'): string {
+  // L2 node #1 (RA) and L3 node #1 (Dunk) have bright-yellow/cyan fills
+  if (node.id === 'L2_RA' || node.id === 'L3_Dunk') {
+    return '#1a1a1a'
+  }
+  if (node.layer === 4) return '#fff'
+  return line === 'en' ? '#e6edf3' : 'rgba(255,255,255,0.7)'
 }
 
 /** Generate tooltip text for a node */
