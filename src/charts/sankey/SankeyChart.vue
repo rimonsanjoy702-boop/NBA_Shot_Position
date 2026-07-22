@@ -310,18 +310,16 @@ const COLUMN_HEADERS = [
           v-for="(link, i) in positionedLinks"
           :key="'link-'+i"
           :d="link.path"
-          :stroke="link.color"
-          :stroke-width="link.width"
-          fill="none"
-          :opacity="linkOpacity.has(i) ? 0.08 : (hoveredLink === i ? 0.85 : 0.35)"
+          :fill="link.color"
+          :opacity="linkOpacity.has(i) ? 0.08 : (hoveredLink === i ? 0.85 : 0.5)"
           :style="{
-            transition: 'opacity 0.2s ease, stroke-width 0.2s ease',
+            transition: 'opacity 0.2s ease',
             cursor: 'pointer',
           }"
           @mouseenter="hoveredLink = i"
           @mouseleave="hoveredLink = null"
           @mousemove="(e: MouseEvent) => showTooltip(e,
-            `${link.source.label} → ${link.target.label}: ${link.value.toLocaleString()} 次出手`)"
+            `${getNodeLabel(link.source as SankeyNode)} → ${getNodeLabel(link.target as SankeyNode)}: ${link.value.toLocaleString()} 次出手`)"
           @mouseout="hideTooltip"
         />
       </g>

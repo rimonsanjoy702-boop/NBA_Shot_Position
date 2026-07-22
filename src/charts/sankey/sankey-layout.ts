@@ -1,14 +1,17 @@
 /**
- * sankey-layout.ts — Node positioning + SVG path generation.
+ * sankey-layout.ts — Node positioning + SVG flow ribbon generation.
  *
  * Fixed 4-column layout:
- *   L1 (time)  x=0     8 nodes
- *   L2 (zone)  x=350   7 nodes
- *   L3 (action) x=700  5 nodes
- *   L4 (result) x=1050 2 nodes
+ *   L1 (time)   x=60     8 nodes
+ *   L2 (zone)   x=380    7 nodes
+ *   L3 (action) x=720    5 nodes
+ *   L4 (result) x=1060   2 nodes
  *
- * Within each column, node heights and y-positions are proportional to `size`.
- * Link paths use cubic bezier curves from source right-edge to target left-edge.
+ * Link ribbons: each link is a filled polygon whose top/bottom edges are
+ * cubic beziers. At the source (right edge), the ribbon's vertical span is
+ * proportional to link.value / total_outgoing(source). At the target (left
+ * edge), the span is proportional to link.value / total_incoming(target).
+ * This makes flows "bundle" to fill node heights exactly.
  */
 
 import type {
@@ -22,37 +25,25 @@ import type {
 // Constants
 // ============================================================================
 
-/** SVG viewBox dimensions */
 export const SVG_WIDTH = 1200
 export const SVG_HEIGHT = 820
-/** Padding at top and bottom */
 const V_PADDING = 40
-/** Usable height for node columns */
 const USABLE_H = SVG_HEIGHT - 2 * V_PADDING
-/** Column X positions */
 const COL_X = [60, 380, 720, 1060]
-/** Column widths (for node rectangles) */
 const COL_W = [100, 120, 120, 90]
-/** Gap between nodes in the same column */
 const NODE_GAP = 6
+
+// Horizontal curvature factor for bezier control points
+const CURVE = 0.35
 
 // ============================================================================
 // Node layout
 // ============================================================================
 
-/**
- * Compute (x, y, height) for every node.
- *
- * Strategy: within each layer, distribute nodes vertically proportional to
- * their size, with small gaps. The total node area + gaps fills USABLE_H.
- */
 export function layoutNodes(nodes: SankeyNode[]): SankeyNodeLayout[] {
-  // Group nodes by layer
   const byLayer: Record<number, SankeyNode[]> = { 1: [], 2: [], 3: [], 4: [] }
   for (const n of nodes) {
-    if (byLayer[n.layer]) {
-      byLayer[n.layer].push(n)
-    }
+    if (byLayer[n.layer]) byLayer[n.layer].push(n)
   }
 
   const result: SankeyNodeLayout[] = []
@@ -67,8 +58,7 @@ export function layoutNodes(nodes: SankeyNode[]): SankeyNodeLayout[] {
     const totalGaps = (layerNodes.length - 1) * NODE_GAP
     const availableH = USABLE_H - totalGaps
 
-    // Sort nodes by a stable order
-    // L1: by time_index; L2: by zone order (hardcoded in data); L3: by data order; L4: Made then Missed
+    // Sort: L1 by time_index, L4 Made then Missed, others stable
     layerNodes.sort((a, b) => {
       if (a.meta?.time_index !== undefined && b.meta?.time_index !== undefined) {
         return a.meta.time_index - b.meta.time_index
@@ -81,15 +71,8 @@ export function layoutNodes(nodes: SankeyNode[]): SankeyNodeLayout[] {
 
     let y = V_PADDING
     for (const node of layerNodes) {
-      const height = Math.max((node.size / totalSize) * availableH, 4) // min 4px
-
-      result.push({
-        ...node,
-        x: COL_X[layer - 1],
-        y,
-        height,
-      })
-
+      const height = Math.max((node.size / totalSize) * availableH, 4)
+      result.push({ ...node, x: COL_X[layer - 1], y, height })
       y += height + NODE_GAP
     }
   }
@@ -98,46 +81,49 @@ export function layoutNodes(nodes: SankeyNode[]): SankeyNodeLayout[] {
 }
 
 // ============================================================================
-// Link path generation
+// Link ribbon path — filled polygon between source and target
 // ============================================================================
 
 /**
- * Generate SVG cubic bezier path for a sankey link.
+ * Build a closed SVG path for one flow ribbon.
  *
- * Curve starts at the right edge of the source node, ends at the left edge
- * of the target node, with horizontal control point offsets.
+ *   sy0 ──── bezier ──── ty0   (top edge)
+ *   sy1 ──── bezier ◄──── ty1   (bottom edge)
+ *
+ * The top bezier goes source→target, the bottom bezier goes target→source,
+ * with the same curvature so the ribbon looks symmetric.
  */
-export function makeLinkPath(
-  source: SankeyNodeLayout,
-  target: SankeyNodeLayout,
+function ribbonPath(
+  // Source exit points (right edge of source node)
+  sx: number,
+  sy0: number,  // top
+  sy1: number,  // bottom
+  // Target entry points (left edge of target node)
+  tx: number,
+  ty0: number,  // top
+  ty1: number,  // bottom
 ): string {
-  // Source exit point (right edge, vertical center)
-  const sx = source.x + COL_W[source.layer - 1]
-  const sy = source.y + source.height / 2
+  const dx = Math.abs(tx - sx) * CURVE
 
-  // Target entry point (left edge, vertical center)
-  const tx = target.x
-  const ty = target.y + target.height / 2
+  // Top bezier: sx→tx  (left to right)
+  // Bottom bezier: tx→sx  (right to left, read backwards = tx→ty1 back to sx→sy1)
 
-  // Horizontal offset for control points (curvature)
-  const dx = Math.abs(tx - sx) * 0.4
+  // claude-ignore — use template literals for SVG path readability
+  const d = [
+    `M ${sx} ${sy0}`,
+    `C ${sx + dx} ${sy0}, ${tx - dx} ${ty0}, ${tx} ${ty0}`,  // top edge →
+    `L ${tx} ${ty1}`,
+    `C ${tx - dx} ${ty1}, ${sx + dx} ${sy1}, ${sx} ${sy1}`,  // bottom edge ←
+    `Z`,
+  ].join(' ')
 
-  const cx1 = sx + dx
-  const cy1 = sy
-  const cx2 = tx - dx
-  const cy2 = ty
-
-  return `M ${sx} ${sy} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${tx} ${ty}`
+  return d
 }
 
 // ============================================================================
-// Full layout — nodes + links
+// Full layout — nodes + flow ribbons
 // ============================================================================
 
-/**
- * Input: raw nodes + links
- * Output: fully-laid-out nodes + links with SVG paths, colors, widths.
- */
 export function computeLayout(
   rawNodes: SankeyNode[],
   rawLinks: SankeyLink[],
@@ -152,39 +138,58 @@ export function computeLayout(
     nodeMap.set(n.id, n)
   }
 
-  // 2. Compute link properties
-  const positionedLinks: SankeyLinkLayout[] = []
+  // 2. Precompute total outgoing / incoming per node
+  const totalOut: Record<string, number> = {}
+  const totalIn: Record<string, number> = {}
+  for (const link of rawLinks) {
+    totalOut[link.source] = (totalOut[link.source] || 0) + link.value
+    totalIn[link.target]  = (totalIn[link.target]  || 0) + link.value
+  }
 
-  // Compute max link value for width scaling
-  const maxValue = rawLinks.reduce((m, l) => Math.max(m, l.value), 0)
+  // 3. Track cumulative offsets per node for stacking ribbons
+  //    outOffset[id] = current y-fraction of source node covered so far
+  //    inOffset[id]  = current y-fraction of target node covered so far
+  const outOffset: Record<string, number> = {}
+  const inOffset: Record<string, number> = {}
+
+  const positionedLinks: SankeyLinkLayout[] = []
 
   for (const link of rawLinks) {
     const srcNode = nodeMap.get(link.source)
     const tgtNode = nodeMap.get(link.target)
     if (!srcNode || !tgtNode) continue
 
-    // Color: use the layer-appropriate color for link lines.
-    // L1→L2 and L2→L3: use source node's color (L2 zone blue-green → link tinted blue-green)
-    // L3→L4: use source node's color (L3 action violet → link tinted violet)
-    // This makes the flow visually follow the source layer's identity.
+    // Vertical span on source (proportional to flow / total outgoing)
+    const srcFraction = totalOut[link.source] > 0
+      ? link.value / totalOut[link.source]
+      : 0
+    const srcY0 = srcNode.y + srcNode.height * (outOffset[link.source] || 0)
+    const srcY1 = srcY0 + srcNode.height * srcFraction
+    outOffset[link.source] = (outOffset[link.source] || 0) + srcFraction
+
+    // Vertical span on target (proportional to flow / total incoming)
+    const tgtFraction = totalIn[link.target] > 0
+      ? link.value / totalIn[link.target]
+      : 0
+    const tgtY0 = tgtNode.y + tgtNode.height * (inOffset[link.target] || 0)
+    const tgtY1 = tgtY0 + tgtNode.height * tgtFraction
+    inOffset[link.target] = (inOffset[link.target] || 0) + tgtFraction
+
+    // Source right edge, target left edge
+    const sx = srcNode.x + COL_W[srcNode.layer - 1]
+    const tx = tgtNode.x
+
+    const path = ribbonPath(sx, srcY0, srcY1, tx, tgtY0, tgtY1)
+
+    // Color from source node's layer
     let color: string
     if (srcNode.layer === 1) {
-      // L1→L2: use L1 orange → link carries time identity
-      color = srcNode.meta?.color || '#F28E6B'
+      color = '#F28E6B'
     } else if (srcNode.layer === 2) {
-      // L2→L3: use L2 color → link carries zone identity
       color = srcNode.meta?.color || '#199E70'
     } else {
-      // L3→L4: use L3 color → link carries action identity
       color = '#7567B2'
     }
-
-    // Width: proportional to value, min 1px, max 40px
-    const width = maxValue > 0
-      ? Math.max(1, (link.value / maxValue) * 40)
-      : 1
-
-    const path = makeLinkPath(srcNode, tgtNode)
 
     positionedLinks.push({
       source: srcNode,
@@ -192,7 +197,7 @@ export function computeLayout(
       value: link.value,
       path,
       color,
-      width,
+      width: 0,       // not used when drawing filled ribbons
       opacity: 'full',
     })
   }
@@ -204,48 +209,32 @@ export function computeLayout(
 // Helpers for interaction
 // ============================================================================
 
-/**
- * Get column X for a layer. Layers 1-4 map to [0,1,2,3].
- */
 export function getColumnX(layer: number): number {
   return COL_X[layer - 1] ?? 0
 }
 
-/** Get column width for a layer */
 export function getColumnWidth(layer: number): number {
   return COL_W[layer - 1] ?? 100
 }
 
-/**
- * Compute downstream node IDs: given a node ID, return all
- * nodes reachable via links from it (1 hop).
- */
 export function getDownstreamIds(
   nodeId: string,
   links: SankeyLinkLayout[],
 ): Set<string> {
   const ids = new Set<string>()
   for (const l of links) {
-    if (l.source.id === nodeId) {
-      ids.add(l.target.id)
-    }
+    if (l.source.id === nodeId) ids.add(l.target.id)
   }
   return ids
 }
 
-/**
- * Compute upstream node IDs: given a node ID, return all
- * nodes that have links pointing to it.
- */
 export function getUpstreamIds(
   nodeId: string,
   links: SankeyLinkLayout[],
 ): Set<string> {
   const ids = new Set<string>()
   for (const l of links) {
-    if (l.target.id === nodeId) {
-      ids.add(l.source.id)
-    }
+    if (l.target.id === nodeId) ids.add(l.source.id)
   }
   return ids
 }
