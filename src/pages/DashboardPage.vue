@@ -228,6 +228,13 @@ onMounted(async () => {
           :state="sankeyState"
           :nodes="nodes"
           :links="links"
+          :selected-time-bin="store.selectedTimeBin"
+          :chart-side="sankeySide"
+          :active-side="store.activeSide"
+          @select-time-bin="(idx: number) => store.setTimeBin(idx, 'sankey')"
+          @select-zone="(id: string) => store.setZone(id, 'sankey')"
+          @select-action="(id: string) => store.setAction(id, 'sankey')"
+          @select-outcome="(id: string) => store.setOutcome(id, 'sankey')"
         />
       </div>
     </div>

@@ -60,11 +60,11 @@ async function refreshSide(side: 'left' | 'right') {
   if (side === 'left') {
     leftTeams.value = getAvailableTeams(data);
     leftPlayers.value = getAvailablePlayers(data);
-    leftCells.value = extractHexbins(data, sel.scope, sel.entityId);
+    leftCells.value = extractHexbins(data, sel.scope, sel.entityId, store.selectedTimeBin);
   } else {
     rightTeams.value = getAvailableTeams(data);
     rightPlayers.value = getAvailablePlayers(data);
-    rightCells.value = extractHexbins(data, sel.scope, sel.entityId);
+    rightCells.value = extractHexbins(data, sel.scope, sel.entityId, store.selectedTimeBin);
   }
 }
 
@@ -81,6 +81,12 @@ async function refreshAll() {
     pageState.value = 'error';
   }
 }
+
+// Watch time bin changes → re-extract with time filter (S6, T1)
+watch(() => store.selectedTimeBin, () => {
+  refreshSide('left');
+  refreshSide('right');
+});
 
 watch(() => store.leftSlot, () => refreshSide('left'), { deep: true });
 watch(() => store.rightSlot, () => refreshSide('right'), { deep: true });

@@ -20,6 +20,7 @@ import type {
   SankeyLinkLayout,
   LoadingState,
   SankeySelection,
+  CourtSide,
 } from './types'
 import { computeLayout } from './sankey-layout'
 
@@ -34,14 +35,18 @@ const props = defineProps<{
   nodes: SankeyNode[]
   /** Raw links (from extractSankeyData) */
   links: SankeyLink[]
-  /** Currently selected time bin (-1 = none) */
-  selectedTimeBin?: number
+  /** Currently selected time bin (null = none) */
+  selectedTimeBin?: number | null
   /** Currently selected zone id */
   selectedZone?: string | null
   /** Currently selected action id */
   selectedAction?: string | null
   /** Currently selected outcome id */
   selectedOutcome?: string | null
+  /** Which side this chart instance belongs to (left/right) */
+  chartSide?: CourtSide
+  /** Store activeSide — for T3 guard */
+  activeSide?: CourtSide
   /** Title text */
   title?: string
 }>()
@@ -84,6 +89,27 @@ const focusedNodeId = ref<string | null>(null)
 /** Clear focus highlight when data changes (season/scope switch) */
 watch(() => props.nodes, () => {
   focusedNodeId.value = null
+})
+
+// ═══════════════════════════════════════════════════════════
+// T3 — 衰减曲线点击 → 桑基 L1 对应节点高亮
+//    (仅当 桑基 Tab 侧 = Store.activeSide)
+// ═══════════════════════════════════════════════════════════
+watch(() => props.selectedTimeBin, (bin) => {
+  // Only respond when this chart's side matches the active side
+  if (!props.chartSide || !props.activeSide) return
+  if (props.chartSide !== props.activeSide) return
+
+  if (bin != null) {
+    const l1NodeId = `L1_${bin}`
+    // Find if this L1 node exists in positioned nodes
+    const found = positionedNodes.value.find(n => n.id === l1NodeId)
+    if (found) {
+      focusedNodeId.value = l1NodeId
+    }
+  } else {
+    focusedNodeId.value = null
+  }
 })
 
 /**
