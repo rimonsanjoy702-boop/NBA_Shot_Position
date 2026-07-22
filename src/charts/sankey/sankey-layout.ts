@@ -203,20 +203,19 @@ export function computeLayout(
 
     const path = ribbonPath(sx, srcY0, srcY1, tx, tgtY0, tgtY1)
 
-    // Color: inherit from the source node
-    // Use the same L1/L2/L3 color lookup logic as SankeyChart.vue
+    // Color: inherit from the source node (same palette as SankeyChart.vue)
     let color: string
     if (srcNode.layer === 1) {
-      const L1_C = ['#552583','#FDB927','#F58426','#006BB6','#98002E','#F9A01B','#F9429E','#43BEE5']
+      const L1_C = ['#7DD3FC','#38BDF8','#0284C7','#0369A1','#A78BFA','#8B5CF6','#6D28D9','#4C1D95']
       color = L1_C[srcNode.meta?.time_index ?? 0] || L1_C[0]
     } else if (srcNode.layer === 2) {
       const zk = srcNode.id.replace('L2_', '')
-      const L2_C: Record<string,string> = {RA:'#C4CED4',Paint:'#00B2A9',MR:'#F51B6D',LC3:'#F58220',RC3:'#1D428A',AB3:'#FFC72C',BC:'#007A33'}
-      color = L2_C[zk] || '#C4CED4'
+      const L2_C: Record<string,string> = {RA:'#E11D48',Paint:'#EA580C',MR:'#F59E0B',LC3:'#10B981',RC3:'#047857',AB3:'#14B8A6',BC:'#94A3B8'}
+      color = L2_C[zk] || '#94A3B8'
     } else {
       const ak = srcNode.id.replace('L3_', '')
-      const L3_C: Record<string,string> = {Dunk:'#CE1141',Layup:'#418FDE',Hook:'#860038',Tip:'#FDBB30',Jump:'#F3C000'}
-      color = L3_C[ak] || '#CE1141'
+      const L3_C: Record<string,string> = {Dunk:'#D946EF',Layup:'#0EA5E9',Hook:'#F472B6',Tip:'#64748B',Jump:'#8B5A2B'}
+      color = L3_C[ak] || '#64748B'
     }
 
     positionedLinks.push({
