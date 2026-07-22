@@ -1,0 +1,74 @@
+[
+  {
+    "label": "Q1前",
+    "left_2pt": 45.06,
+    "right_2pt": 45.98,
+    "left_3pt": 38.5,
+    "right_3pt": 38.39,
+    "left_shot_count": 254433,
+    "right_shot_count": 262978
+  },
+  {
+    "label": "Q1后",
+    "left_2pt": 44.34,
+    "right_2pt": 45.59,
+    "left_3pt": 35.43,
+    "right_3pt": 35.22,
+    "left_shot_count": 256360,
+    "right_shot_count": 267629
+  },
+  {
+    "label": "Q2前",
+    "left_2pt": 43.96,
+    "right_2pt": 44.84,
+    "left_3pt": 36.39,
+    "right_3pt": 36.8,
+    "left_shot_count": 235240,
+    "right_shot_count": 244521
+  },
+  {
+    "label": "Q2后",
+    "left_2pt": 44.61,
+    "right_2pt": 45.89,
+    "left_3pt": 34.8,
+    "right_3pt": 34.61,
+    "left_shot_count": 247417,
+    "right_shot_count": 258337
+  },
+  {
+    "label": "Q3前",
+    "left_2pt": 44.41,
+    "right_2pt": 45.75,
+    "left_3pt": 37.79,
+    "right_3pt": 38.08,
+    "left_shot_count": 235644,
+    "right_shot_count": 243926
+  },
+  {
+    "label": "Q3后",
+    "left_2pt": 43.6,
+    "right_2pt": 44.73,
+    "left_3pt": 34.47,
+    "right_3pt": 34.18,
+    "left_shot_count": 242977,
+    "right_shot_count": 252001
+  },
+  {
+    "label": "Q4前",
+    "left_2pt": 43.22,
+    "right_2pt": 44.39,
+    "left_3pt": 35.53,
+    "right_3pt": 36.0,
+    "left_shot_count": 224031,
+    "right_shot_count": 231753
+  },
+  {
+    "label": "Q4后",
+    "left_2pt": 43.24,
+    "right_2pt": 44.3,
+    "left_3pt": 32.9,
+    "right_3pt": 33.08,
+    "left_shot_count": 238993,
+    "right_shot_count": 247734
+  }
+]

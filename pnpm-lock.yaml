@@ -20,6 +20,9 @@ importers:
       element-plus:
         specifier: ^2.10.2
         version: 2.14.3(vue@3.5.40(typescript@5.8.3))
+      pinia:
+        specifier: ^2.1.7
+        version: 2.1.7(typescript@5.8.3)(vue@3.5.40(typescript@5.8.3))
       vue:
         specifier: ^3.5.13
         version: 3.5.40(typescript@5.8.3)
@@ -794,6 +797,18 @@ packages:
     resolution: {integrity: sha512-M7BAV6Rlcy5u+m6oPhAPFgJTzAioX/6B0DxyvDlo9l8+T3nLKbrczg2WLUyzd45L8RqfUMyGPzekbMvX2Ldkwg==}
     engines: {node: '>=12'}
 
+  pinia@2.1.7:
+    resolution: {integrity: sha512-+C2AHFtcFqjPih0zpYuvof37SFxMQ7OEG2zV9jRI12i9BOy3YQVAHwdKtyyc8pDcDyIc33WCIsZaCFWU7WWxGQ==}
+    peerDependencies:
+      '@vue/composition-api': ^1.4.0
+      typescript: '>=4.4.4'
+      vue: ^2.6.14 || ^3.3.0
+    peerDependenciesMeta:
+      '@vue/composition-api':
+        optional: true
+      typescript:
+        optional: true
+
   postcss@8.5.20:
     resolution: {integrity: sha512-lW616l85ucIQL+FocMmL7pQFPqBmwejrCMg+iPxyImlrANNJG9NHq/RkyCZopDhd8C3LA03PHRJDjkbGu8vvug==}
     engines: {node: ^10 || ^12 || >=14}
@@ -883,6 +898,17 @@ packages:
 
   vue-demi@0.13.11:
     resolution: {integrity: sha512-IR8HoEEGM65YY3ZJYAjMlKygDQn25D5ajNFNoKh9RSDMQtlzCxtfQjdQgv9jjK+m3377SsJXY8ysq8kLCZL25A==}
+    engines: {node: '>=12'}
+    hasBin: true
+    peerDependencies:
+      '@vue/composition-api': ^1.0.0-rc.1
+      vue: ^3.0.0-0 || ^2.6.0
+    peerDependenciesMeta:
+      '@vue/composition-api':
+        optional: true
+
+  vue-demi@0.14.10:
+    resolution: {integrity: sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==}
     engines: {node: '>=12'}
     hasBin: true
     peerDependencies:
@@ -1616,6 +1642,14 @@ snapshots:
 
   picomatch@4.0.2: {}
 
+  pinia@2.1.7(typescript@5.8.3)(vue@3.5.40(typescript@5.8.3)):
+    dependencies:
+      '@vue/devtools-api': 6.6.4
+      vue: 3.5.40(typescript@5.8.3)
+      vue-demi: 0.14.10(vue@3.5.40(typescript@5.8.3))
+    optionalDependencies:
+      typescript: 5.8.3
+
   postcss@8.5.20:
     dependencies:
       nanoid: 3.3.16
@@ -1690,6 +1724,10 @@ snapshots:
   vue-component-type-helpers@3.3.7: {}
 
   vue-demi@0.13.11(vue@3.5.40(typescript@5.8.3)):
+    dependencies:
+      vue: 3.5.40(typescript@5.8.3)
+
+  vue-demi@0.14.10(vue@3.5.40(typescript@5.8.3)):
     dependencies:
       vue: 3.5.40(typescript@5.8.3)
 
