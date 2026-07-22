@@ -415,7 +415,7 @@ function drawChart(
 
       g.append("text")
         .attr("x", x20 + 14)
-        .attr("y", PLOT_H - 8 + 22)
+        .attr("y", PLOT_H - 8 - 22)
         .attr("fill", "var(--text-tertiary, #5c6670)")
         .attr("font-size", "22")
         .text("投篮数据截止");
