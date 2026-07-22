@@ -2,38 +2,41 @@
 /**
  * SankeyDemoPage.vue — Demo page for the sankey chart.
  *
- * Controls:
- *   - Court side: left / right (two-option toggle)
- *   - Season: dropdown (23 seasons)
- *   - Scope: dropdown (league / team / player)
- *   - Entity: dropdown (shown when scope is team or player)
+ * Left / right half-court each have independent season / scope / entity selectors.
+ * Clicking the left/right tab switches which side is displayed as a single chart.
  */
 
 import { ref, computed, watch, shallowRef } from 'vue'
 import { fetchSankeySeason, extractSankeyData, getAvailableTeams, getAvailablePlayers } from './sankey-data'
-import type { SankeySeasonData, SankeyNode, SankeyLink, LoadingState, CourtSide, Scope, EntityOption } from './types'
+import type { SankeySeasonData, SankeyNode, SankeyLink, LoadingState, Scope, EntityOption, CourtSide } from './types'
 import { ALL_SEASONS } from './types'
 import SankeyChart from './SankeyChart.vue'
+import type { SankeySelection } from './types'
 
 // ============================================================================
-// State
+// State — left & right each have independent selection state
 // ============================================================================
 
-const season = ref('2014-15')
-const courtSide = ref<CourtSide>('left')
-const scope = ref<Scope>('league')
-const entityId = ref<number | undefined>(undefined)
+const activeSide = ref<CourtSide>('left')
+
+const leftSelection = ref<SankeySelection>({ scope: 'league', season: '2014-15' })
+const rightSelection = ref<SankeySelection>({ scope: 'league', season: '2014-15' })
+
+// Each side has its own loaded data cache
+const leftData = ref<SankeySeasonData | null>(null)
+const rightData = ref<SankeySeasonData | null>(null)
+
+// Each side has its own entity lists
+const leftTeams = shallowRef<EntityOption[]>([])
+const leftPlayers = shallowRef<EntityOption[]>([])
+const rightTeams = shallowRef<EntityOption[]>([])
+const rightPlayers = shallowRef<EntityOption[]>([])
 
 const loadingState = ref<LoadingState>('loading')
 const errorMessage = ref('')
 
-const seasonData = ref<SankeySeasonData | null>(null)
 const nodes = ref<SankeyNode[]>([])
 const links = ref<SankeyLink[]>([])
-
-// Entity list for the current season
-const teams = shallowRef<EntityOption[]>([])
-const players = shallowRef<EntityOption[]>([])
 
 // Interaction state by layer
 const selectedTimeBin = ref<number>(-1)
@@ -42,50 +45,78 @@ const selectedAction = ref<string | null>(null)
 const selectedOutcome = ref<string | null>(null)
 
 // ============================================================================
-// Derived
+// Derived — current active selection
 // ============================================================================
 
-const entityOptions = computed(() => scope.value === 'team' ? teams.value : players.value)
+const currentSelection = computed(() =>
+  activeSide.value === 'left' ? leftSelection.value : rightSelection.value
+)
+
+const currentData = computed(() =>
+  activeSide.value === 'left' ? leftData.value : rightData.value
+)
+
+const currentTeams = computed(() =>
+  activeSide.value === 'left' ? leftTeams.value : rightTeams.value
+)
+
+const currentPlayers = computed(() =>
+  activeSide.value === 'left' ? leftPlayers.value : rightPlayers.value
+)
+
+const entityOptions = computed(() =>
+  currentSelection.value.scope === 'team' ? currentTeams.value : currentPlayers.value
+)
 
 const title = computed(() => {
-  const sideLabel = courtSide.value === 'left' ? '左半场' : '右半场'
+  const sideLabel = activeSide.value === 'left' ? '左半场' : '右半场'
+  const sel = currentSelection.value
   let scopeLabel = '联盟'
-  if (scope.value === 'team') {
-    const team = teams.value.find(t => t.id === entityId.value)
+  if (sel.scope === 'team') {
+    const team = currentTeams.value.find(t => t.id === sel.entityId)
     scopeLabel = team ? team.name : '球队'
-  } else if (scope.value === 'player') {
-    const player = players.value.find(p => p.id === entityId.value)
+  } else if (sel.scope === 'player') {
+    const player = currentPlayers.value.find(p => p.id === sel.entityId)
     scopeLabel = player ? player.name : '球员'
   }
-  return `投篮结构 · ${season.value} · ${sideLabel} · ${scopeLabel}`
+  return `投篮结构 · ${sel.season} · ${sideLabel} · ${scopeLabel}`
 })
 
 // ============================================================================
-// Data loading
+// Data loading — load one side (season may differ between sides)
 // ============================================================================
 
-async function loadData() {
-  loadingState.value = 'loading'
-  errorMessage.value = ''
-  try {
-    seasonData.value = await fetchSankeySeason(season.value)
-    teams.value = getAvailableTeams(seasonData.value)
-    players.value = getAvailablePlayers(seasonData.value)
-    refreshExtraction()
-  } catch (e: any) {
-    errorMessage.value = e.message || '加载失败'
-    loadingState.value = 'error'
+const seasonCache = ref<Map<string, SankeySeasonData>>(new Map())
+
+async function loadSeason(season: string): Promise<SankeySeasonData> {
+  if (seasonCache.value.has(season)) return seasonCache.value.get(season)!
+  const data = await fetchSankeySeason(season)
+  seasonCache.value.set(season, data)
+  return data
+}
+
+async function loadSide(side: CourtSide) {
+  const sel = side === 'left' ? leftSelection.value : rightSelection.value
+  const data = await loadSeason(sel.season)
+  if (side === 'left') {
+    leftData.value = data
+    leftTeams.value = getAvailableTeams(data)
+    leftPlayers.value = getAvailablePlayers(data)
+  } else {
+    rightData.value = data
+    rightTeams.value = getAvailableTeams(data)
+    rightPlayers.value = getAvailablePlayers(data)
   }
 }
 
-function refreshExtraction() {
-  if (!seasonData.value) return
-  const result = extractSankeyData(seasonData.value, scope.value, courtSide.value, entityId.value)
+function refreshActiveChart() {
+  const data = currentData.value
+  if (!data) return
+  const sel = currentSelection.value
+  const result = extractSankeyData(data, sel.scope, sel.entityId)
   nodes.value = result.nodes
   links.value = result.links
   loadingState.value = result.nodes.length > 0 ? 'ready' : 'empty'
-
-  // Clear selections when switching
   selectedTimeBin.value = -1
   selectedZone.value = null
   selectedAction.value = null
@@ -93,103 +124,134 @@ function refreshExtraction() {
 }
 
 // ============================================================================
-// Watchers
+// Watchers — re-fetch when season changes, re-extract when scope/entity/side changes
 // ============================================================================
 
-watch(season, () => { loadData() })
-watch(courtSide, () => { refreshExtraction() })
-watch(scope, () => {
-  entityId.value = undefined
-  refreshExtraction()
+async function onLeftSelectionChange() {
+  await loadSide('left')
+  if (activeSide.value === 'left') refreshActiveChart()
+}
+
+async function onRightSelectionChange() {
+  await loadSide('right')
+  if (activeSide.value === 'right') refreshActiveChart()
+}
+
+watch(() => leftSelection.value.season, onLeftSelectionChange)
+watch(() => rightSelection.value.season, onRightSelectionChange)
+watch(() => leftSelection.value.scope, () => { if (activeSide.value === 'left') refreshActiveChart() })
+watch(() => rightSelection.value.scope, () => { if (activeSide.value === 'right') refreshActiveChart() })
+watch(() => leftSelection.value.entityId, () => { if (activeSide.value === 'left') refreshActiveChart() })
+watch(() => rightSelection.value.entityId, () => { if (activeSide.value === 'right') refreshActiveChart() })
+
+// Switching side → just re-extract from the other side's cached data
+watch(activeSide, () => {
+  refreshActiveChart()
 })
-watch(entityId, () => { refreshExtraction() })
 
 // ============================================================================
-// Event handlers
+// Selection setter helpers (bound by v-model style in template)
+// ============================================================================
+
+function setSelection(side: CourtSide, patch: Partial<SankeySelection>) {
+  if (side === 'left') {
+    leftSelection.value = { ...leftSelection.value, ...patch }
+  } else {
+    rightSelection.value = { ...rightSelection.value, ...patch }
+  }
+}
+
+// ============================================================================
+// Event handlers (chart clicks)
 // ============================================================================
 
 function onSelectTimeBin(index: number) {
   selectedTimeBin.value = selectedTimeBin.value === index ? -1 : index
 }
-
 function onSelectZone(id: string) {
   selectedZone.value = selectedZone.value === id ? null : id
 }
-
 function onSelectAction(id: string) {
   selectedAction.value = selectedAction.value === id ? null : id
 }
-
 function onSelectOutcome(id: string) {
   selectedOutcome.value = selectedOutcome.value === id ? null : id
 }
-
 function clearAll() {
-  selectedTimeBin.value = -1
-  selectedZone.value = null
-  selectedAction.value = null
-  selectedOutcome.value = null
+  selectedTimeBin.value = -1; selectedZone.value = null
+  selectedAction.value = null; selectedOutcome.value = null
 }
 
 // ============================================================================
-// Init
+// Init — load both sides
 // ============================================================================
 
-loadData()
+async function init() {
+  loadingState.value = 'loading'
+  try {
+    await Promise.all([loadSide('left'), loadSide('right')])
+    refreshActiveChart()
+  } catch (e: any) {
+    errorMessage.value = e.message || '加载失败'
+    loadingState.value = 'error'
+  }
+}
+init()
 </script>
 
 <template>
   <div class="sankey-demo">
-    <!-- Header -->
     <header class="demo-header">
       <h1 class="demo-title">🏀 {{ title }}</h1>
       <p class="demo-subtitle">四层桑基投篮结构图 · SVG 手绘</p>
     </header>
 
-    <!-- Controls -->
-    <div class="controls-row">
-      <!-- Court side: left / right only -->
-      <div class="control-group">
-        <span class="control-label">半场</span>
-        <div class="side-tabs">
-          <button
-            :class="['side-tab', { active: courtSide === 'left' }]"
-            @click="courtSide = 'left'"
-          >左半场</button>
-          <button
-            :class="['side-tab', { active: courtSide === 'right' }]"
-            @click="courtSide = 'right'"
-          >右半场</button>
-        </div>
-      </div>
+    <!-- Half-court tabs -->
+    <div class="court-tabs">
+      <button
+        :class="['court-tab', { active: activeSide === 'left' }]"
+        @click="activeSide = 'left'"
+      >左半场</button>
+      <button
+        :class="['court-tab', { active: activeSide === 'right' }]"
+        @click="activeSide = 'right'"
+      >右半场</button>
+    </div>
 
-      <!-- Scope: dropdown -->
+    <!-- Selection controls — for the active side -->
+    <div class="controls-row">
       <div class="control-group">
         <span class="control-label">粒度</span>
-        <select v-model="scope" class="scope-select">
+        <select
+          :value="currentSelection.scope"
+          @change="setSelection(activeSide, { scope: ($event.target as HTMLSelectElement).value as Scope, entityId: undefined })"
+          class="scope-select"
+        >
           <option value="league">联盟</option>
           <option value="team">球队</option>
           <option value="player">球员</option>
         </select>
       </div>
 
-      <!-- Entity: dropdown when scope is team/player -->
-      <div v-if="scope !== 'league'" class="control-group">
-        <span class="control-label">{{ scope === 'team' ? '球队' : '球员' }}</span>
-        <select v-model="entityId" class="entity-select">
+      <div v-if="currentSelection.scope !== 'league'" class="control-group">
+        <span class="control-label">{{ currentSelection.scope === 'team' ? '球队' : '球员' }}</span>
+        <select
+          :value="currentSelection.entityId"
+          @change="setSelection(activeSide, { entityId: Number(($event.target as HTMLSelectElement).value) || undefined })"
+          class="entity-select"
+        >
           <option :value="undefined">-- 请选择 --</option>
-          <option
-            v-for="e in entityOptions"
-            :key="e.id"
-            :value="e.id"
-          >{{ e.name }}</option>
+          <option v-for="e in entityOptions" :key="e.id" :value="e.id">{{ e.name }}</option>
         </select>
       </div>
 
-      <!-- Season -->
       <div class="control-group">
         <span class="control-label">赛季</span>
-        <select v-model="season" class="season-select">
+        <select
+          :value="currentSelection.season"
+          @change="setSelection(activeSide, { season: ($event.target as HTMLSelectElement).value })"
+          class="season-select"
+        >
           <option v-for="s in ALL_SEASONS" :key="s" :value="s">{{ s }}</option>
         </select>
       </div>
@@ -233,16 +295,14 @@ loadData()
       @select-outcome="onSelectOutcome"
     />
 
-    <!-- Error state -->
     <div v-if="loadingState === 'error'" class="error-box">
       <span>⚠️ {{ errorMessage }}</span>
-      <button class="retry-btn" @click="loadData">重试</button>
+      <button class="retry-btn" @click="init">重试</button>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* ===== Layout ===== */
 .sankey-demo {
   min-height: 100vh;
   background: #0d1117;
@@ -253,21 +313,34 @@ loadData()
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* ===== Header ===== */
 .demo-header { text-align: center; }
-.demo-title {
-  font-size: 28px;
-  font-weight: 800;
-  color: #e6edf3;
-  margin: 0;
-}
-.demo-subtitle {
-  font-size: 13px;
-  color: #8b949e;
-  margin: 4px 0 0;
-}
+.demo-title { font-size: 28px; font-weight: 800; color: #e6edf3; margin: 0; }
+.demo-subtitle { font-size: 13px; color: #8b949e; margin: 4px 0 0; }
 
-/* ===== Controls ===== */
+/* ---- Half-court tabs ---- */
+.court-tabs {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.12);
+  align-self: center;
+}
+.court-tab {
+  padding: 8px 32px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #8b949e;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.court-tab:first-child { border-right: 1px solid rgba(255,255,255,0.08); }
+.court-tab:hover { background: rgba(255,255,255,0.04); }
+.court-tab.active { background: #3498db; color: #fff; }
+
+/* ---- Controls ---- */
 .controls-row {
   display: flex;
   align-items: center;
@@ -277,133 +350,55 @@ loadData()
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 8px;
   flex-wrap: wrap;
+  justify-content: center;
 }
-
-.control-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
+.control-group { display: flex; align-items: center; gap: 8px; }
 .control-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #8b949e;
-  text-transform: uppercase;
+  font-size: 11px; font-weight: 600; color: #8b949e; text-transform: uppercase;
 }
-
-/* Side tabs */
-.side-tabs {
-  display: flex;
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.12);
-}
-
-.side-tab {
-  padding: 4px 12px;
-  font-size: 12px;
-  color: #8b949e;
-  background: transparent;
-  border: none;
-  border-right: 1px solid rgba(255,255,255,0.08);
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.side-tab:last-child { border-right: none; }
-.side-tab:hover { background: rgba(255,255,255,0.04); }
-.side-tab.active {
-  background: #3498db;
-  color: #fff;
-}
-
-/* Dropdown selects */
-.scope-select,
-.entity-select,
-.season-select {
-  padding: 4px 8px;
-  font-size: 12px;
-  background: rgba(255,255,255,0.06);
-  color: #e6edf3;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 6px;
-  cursor: pointer;
-  min-width: 80px;
+.scope-select, .entity-select, .season-select {
+  padding: 4px 8px; font-size: 12px;
+  background: rgba(255,255,255,0.06); color: #e6edf3;
+  border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; cursor: pointer;
 }
 .entity-select { min-width: 160px; }
-.scope-select option,
-.entity-select option,
-.season-select option {
-  background: #1a1f2e;
-  color: #e6edf3;
+.scope-select option, .entity-select option, .season-select option {
+  background: #1a1f2e; color: #e6edf3;
 }
 
-/* ===== Breadcrumb ===== */
+/* ---- Breadcrumb ---- */
 .selection-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: rgba(52,152,219,0.08);
-  border: 1px solid rgba(52,152,219,0.2);
-  border-radius: 6px;
-  font-size: 12px;
-  flex-wrap: wrap;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; background: rgba(52,152,219,0.08);
+  border: 1px solid rgba(52,152,219,0.2); border-radius: 6px;
+  font-size: 12px; flex-wrap: wrap;
 }
-
 .breadcrumb-label { color: #8b949e; }
-
 .breadcrumb-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  color: #fff;
-  font-size: 11px;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 4px; color: #fff; font-size: 11px;
 }
 .time-chip { background: #d95926; }
 .zone-chip { background: #199e70; }
 .action-chip { background: #9085e9; }
 .outcome-chip { background: #3987e5; }
-
 .chip-close {
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: 14px;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
+  border: none; background: transparent; color: inherit;
+  font-size: 14px; cursor: pointer; padding: 0; line-height: 1;
 }
 .clear-all {
-  font-size: 11px;
-  color: #8b949e;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
+  font-size: 11px; color: #8b949e; background: transparent;
+  border: none; cursor: pointer; text-decoration: underline;
 }
 
-/* ===== Error ===== */
+/* ---- Error ---- */
 .error-box {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 24px;
-  color: #ef4444;
-  background: rgba(239,68,68,0.08);
-  border: 1px solid rgba(239,68,68,0.2);
-  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 24px; color: #ef4444;
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px;
 }
 .retry-btn {
-  padding: 4px 12px;
-  font-size: 12px;
-  color: #e6edf3;
-  background: #3498db;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  padding: 4px 12px; font-size: 12px; color: #e6edf3;
+  background: #3498db; border: none; border-radius: 4px; cursor: pointer;
 }
 </style>

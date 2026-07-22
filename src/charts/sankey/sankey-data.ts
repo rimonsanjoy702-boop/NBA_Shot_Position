@@ -1,10 +1,10 @@
 /**
  * sankey-data.ts — Data loading, decoding, and entity node reconstruction.
  *
- * JSON format (v5 optimized):
- *   league.{side}  → { nodes: SankeyNode[], links: RawSankeyLink[] }
- *   teams.{tid}.{side}  → { links: RawSankeyLink[], l2_fg_pct: {...} }
- *   players.{pid}.{side} → { links: RawSankeyLink[], l2_fg_pct: {...} }
+ * JSON format (v6):
+ *   league  → { nodes: SankeyNode[], links: RawSankeyLink[] }
+ *   teams.{tid}  → { team_name, abbr, links: RawSankeyLink[], l2_fg_pct: {...} }
+ *   players.{pid} → { player_name, team_id, team_abbr, links: RawSankeyLink[], l2_fg_pct: {...} }
  *
  * Raw links are arrays [sourceId, targetId, value] in JSON; this module decodes
  * them to SankeyLink objects. Entity nodes are reconstructed from the league
@@ -16,9 +16,6 @@ import type {
   SankeyLink,
   RawSankeyLink,
   SankeySeasonData,
-  SankeyLeagueBlock,
-  SankeyEntityBlock,
-  CourtSide,
   Scope,
 } from './types'
 
@@ -53,67 +50,45 @@ export function decodeLinks(raw: RawSankeyLink[]): SankeyLink[] {
 
 /**
  * Reconstruct entity nodes from league template + entity links + l2_fg_pct.
- *
- * Logic:
- *   - Clone league template nodes (id, label, layer, color)
- *   - Derive sizes: sum link values flowing through each node
- *   - Override L2 fg_pct from entity's own l2_fg_pct map
- *   - Filter out nodes with size=0
  */
 export function reconstructEntityNodes(
   leagueNodes: SankeyNode[],
   decodedLinks: SankeyLink[],
   l2FgPct: Record<string, number>,
 ): SankeyNode[] {
-  // Compute node sizes from links
   const sizeMap: Record<string, number> = {}
 
   for (const link of decodedLinks) {
-    // L1→L2: source=L1, target=L2
     if (link.source.startsWith('L1_')) {
       sizeMap[link.source] = (sizeMap[link.source] || 0) + link.value
       sizeMap[link.target] = (sizeMap[link.target] || 0) + link.value
-    }
-    // L2→L3: source=L2, target=L3 — L2 already counted above
-    else if (link.source.startsWith('L2_')) {
-      // L2 size already from L1→L2 links; take max to be safe
+    } else if (link.source.startsWith('L2_')) {
       sizeMap[link.source] = Math.max(sizeMap[link.source] || 0, link.value)
       sizeMap[link.target] = (sizeMap[link.target] || 0) + link.value
-    }
-    // L3→L4: source=L3, target=L4 — L3 already counted above
-    else if (link.source.startsWith('L3_')) {
+    } else if (link.source.startsWith('L3_')) {
       sizeMap[link.target] = (sizeMap[link.target] || 0) + link.value
     }
   }
 
-  // Build nodes from league template
   const nodes: SankeyNode[] = []
   for (const template of leagueNodes) {
     const size = sizeMap[template.id] || 0
-    if (size === 0) continue // entity has no data for this node
+    if (size === 0) continue
 
-    const node: SankeyNode = {
-      ...template,
-      size,
-      meta: { ...template.meta },
-    }
-
-    // Override L2 fg_pct
+    const node: SankeyNode = { ...template, size, meta: { ...template.meta } }
     if (template.layer === 2) {
       const zoneKey = template.id.replace('L2_', '')
       if (l2FgPct[zoneKey] !== undefined) {
         node.meta = { ...node.meta, fg_pct: l2FgPct[zoneKey] }
       }
     }
-
     nodes.push(node)
   }
-
   return nodes
 }
 
 // ---------------------------------------------------------------------------
-// 4. Main extractor — returns ready-to-render { nodes, links }
+// 4. Main extractor
 // ---------------------------------------------------------------------------
 
 export interface SankeyRenderData {
@@ -121,22 +96,16 @@ export interface SankeyRenderData {
   links: SankeyLink[]
 }
 
-/**
- * Extract sankey data for a given scope/entity/court-side.
- * This is the single entry point for the chart component.
- */
 export function extractSankeyData(
   data: SankeySeasonData,
   scope: Scope,
-  courtSide: CourtSide,
   entityId?: number,
 ): SankeyRenderData {
-  // League: direct read (nodes + links)
+  // League
   if (scope === 'league') {
-    const block: SankeyLeagueBlock = data.league[courtSide]
     return {
-      nodes: block.nodes,
-      links: decodeLinks(block.links),
+      nodes: data.league.nodes,
+      links: decodeLinks(data.league.links),
     }
   }
 
@@ -144,10 +113,9 @@ export function extractSankeyData(
   if (scope === 'team' && entityId != null) {
     const teamData = data.teams[String(entityId)]
     if (!teamData) return { nodes: [], links: [] }
-    const block: SankeyEntityBlock = teamData[courtSide]
-    const decodedLinks = decodeLinks(block.links)
+    const decodedLinks = decodeLinks(teamData.links)
     return {
-      nodes: reconstructEntityNodes(data.league[courtSide].nodes, decodedLinks, block.l2_fg_pct),
+      nodes: reconstructEntityNodes(data.league.nodes, decodedLinks, teamData.l2_fg_pct),
       links: decodedLinks,
     }
   }
@@ -156,10 +124,9 @@ export function extractSankeyData(
   if (scope === 'player' && entityId != null) {
     const playerData = data.players[String(entityId)]
     if (!playerData) return { nodes: [], links: [] }
-    const block: SankeyEntityBlock = playerData[courtSide]
-    const decodedLinks = decodeLinks(block.links)
+    const decodedLinks = decodeLinks(playerData.links)
     return {
-      nodes: reconstructEntityNodes(data.league[courtSide].nodes, decodedLinks, block.l2_fg_pct),
+      nodes: reconstructEntityNodes(data.league.nodes, decodedLinks, playerData.l2_fg_pct),
       links: decodedLinks,
     }
   }
@@ -176,7 +143,6 @@ export interface EntityOption {
   name: string
 }
 
-/** Get all teams available in this season */
 export function getAvailableTeams(data: SankeySeasonData): EntityOption[] {
   return Object.entries(data.teams).map(([id, info]) => ({
     id: Number(id),
@@ -184,7 +150,6 @@ export function getAvailableTeams(data: SankeySeasonData): EntityOption[] {
   }))
 }
 
-/** Get all players available in this season */
 export function getAvailablePlayers(data: SankeySeasonData): EntityOption[] {
   return Object.entries(data.players).map(([id, info]) => ({
     id: Number(id),

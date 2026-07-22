@@ -110,7 +110,6 @@ def court_side(x: int) -> str:
 # ============================================================================
 # Team name / abbr map
 # ============================================================================
-
 ABBR_MAP = {
     "Atlanta Hawks":"ATL","Boston Celtics":"BOS","Brooklyn Nets":"BKN","New Jersey Nets":"NJN",
     "Charlotte Hornets":"CHA","Charlotte Bobcats":"CHA","Chicago Bulls":"CHI",
@@ -232,7 +231,7 @@ def build_entity_data(agg: dict, min_count: int) -> dict:
 # ============================================================================
 
 def build_aggregates():
-    """Returns (league_agg, team_agg, player_agg, player_meta)."""
+    """聚合时不区分半场，只保留全量数据。左边/右边切换留给前端与Hexbin联动时使用。"""
     print("=" * 60)
     print("[Phase 1] Reading CSV & aggregating ...")
     print(f"  Source: {SHOT_CSV}")
@@ -259,16 +258,15 @@ def build_aggregates():
             if zone is None: continue
             action = classify_action_type(str(row["Action Type"]))
             outcome = "Made" if int(row["Shot Made Flag"])==1 else "Missed"
-            side = court_side(int(row["X Location"]))
             tid = int(row["Team ID"])
             pid = int(row["Player ID"])
             pname = str(row["Player Name"])
 
-            league[(season, side, tb, zone, action, outcome)] += 1
-            team[(season, tid, side, tb, zone, action, outcome)] += 1
-            # Only aggregate players in the whitelist (§5.5)
+            # 不区分半场，聚合所有数据
+            league[(season, tb, zone, action, outcome)] += 1
+            team[(season, tid, tb, zone, action, outcome)] += 1
             if pid in PLAYER_WHITELIST:
-                player[(season, pid, side, tb, zone, action, outcome)] += 1
+                player[(season, pid, tb, zone, action, outcome)] += 1
             if pid in PLAYER_WHITELIST and pid not in player_meta:
                 player_meta[pid] = {"name": pname, "team_id": tid}
             elif pid in PLAYER_WHITELIST:
@@ -305,60 +303,52 @@ def build_season_outputs(league_agg, team_agg, player_agg, player_meta,
     for season in all_seasons:
         print(f"\n  [{season}]", end=" ", flush=True)
 
-        # --- League (full: nodes + links) ---
-        league_data = {}
-        for side in ["all","left","right"]:
-            side_agg = defaultdict(int)
-            for (s, sd, tb, zone, action, outcome), cnt in league_agg.items():
-                if s==season and (side=="all" or sd==side):
-                    side_agg[(tb, zone, action, outcome)] += cnt
-            league_data[side] = build_league_data(side_agg, MIN_COUNT_LEAGUE)
+        # --- League ---
+        league_agg_season = defaultdict(int)
+        for (s, tb, zone, action, outcome), cnt in league_agg.items():
+            if s == season:
+                league_agg_season[(tb, zone, action, outcome)] += cnt
+        league_data = build_league_data(league_agg_season, MIN_COUNT_LEAGUE)
 
         season_json = {"season": season, "league": league_data, "teams": {}, "players": {}}
 
-        # --- Teams (optimized: links + l2_fg_pct only) ---
+        # --- Teams ---
         season_teams = set()
         for (s, tid, *_) in team_agg:
             if s == season: season_teams.add(tid)
 
         for tid in sorted(season_teams):
-            team_data = {}
-            for side in ["all","left","right"]:
-                side_agg = defaultdict(int)
-                for (s, t, sd, tb, zone, action, outcome), cnt in team_agg.items():
-                    if s==season and t==tid and (side=="all" or sd==side):
-                        side_agg[(tb, zone, action, outcome)] += cnt
-                team_data[side] = build_entity_data(side_agg, MIN_COUNT_TEAM)
+            team_agg_season = defaultdict(int)
+            for (s, t, tb, zone, action, outcome), cnt in team_agg.items():
+                if s==season and t==tid:
+                    team_agg_season[(tb, zone, action, outcome)] += cnt
+            team_data = build_entity_data(team_agg_season, MIN_COUNT_TEAM)
             season_json["teams"][str(tid)] = {
                 "team_name": team_names.get(tid, f"Team {tid}"),
                 "abbr": team_abbrs.get(tid, ""),
                 **team_data,
             }
 
-        # --- Players (optimized: links + l2_fg_pct only) ---
+        # --- Players ---
         season_players = set()
         for (s, pid, *_) in player_agg:
             if s == season: season_players.add(pid)
 
         for pid in sorted(season_players):
             meta = player_meta.get(pid, {})
-            player_data = {}
             total_shots = 0
-            for side in ["all","left","right"]:
-                side_agg = defaultdict(int)
-                for (s, p, sd, tb, zone, action, outcome), cnt in player_agg.items():
-                    if s==season and p==pid and (side=="all" or sd==side):
-                        side_agg[(tb, zone, action, outcome)] += cnt
-                        if side == "all":
-                            total_shots += cnt
-                player_data[side] = build_entity_data(side_agg, MIN_COUNT_PLAYER)
+            player_agg_season = defaultdict(int)
+            for (s, p, tb, zone, action, outcome), cnt in player_agg.items():
+                if s==season and p==pid:
+                    player_agg_season[(tb, zone, action, outcome)] += cnt
+                    total_shots += cnt
             if total_shots < MIN_COUNT_PLAYER:
                 continue
             season_json["players"][str(pid)] = {
                 "player_name": meta.get("name", f"Player {pid}"),
                 "team_id": meta.get("team_id", 0),
                 "team_abbr": team_abbrs.get(meta.get("team_id", 0), ""),
-                **player_data,
+                **build_entity_data(player_agg_season, MIN_COUNT_PLAYER),
             }
 
         # --- Write (compact JSON) ---

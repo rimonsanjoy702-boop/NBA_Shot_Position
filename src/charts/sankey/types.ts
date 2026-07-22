@@ -40,8 +40,8 @@ export interface SankeyLeagueBlock {
   links: RawSankeyLink[]
 }
 
-/** Court side selection */
-export type CourtSide = 'all' | 'left' | 'right'
+/** Court side label (for Hexbin linkage only, data is identical) */
+export type CourtSide = 'left' | 'right'
 
 /** Granularity scope */
 export type Scope = 'league' | 'team' | 'player'
@@ -50,38 +50,31 @@ export type Scope = 'league' | 'team' | 'player'
 export interface TeamMeta {
   team_name: string
   abbr: string
-  all: SankeyEntityBlock
-  left: SankeyEntityBlock
-  right: SankeyEntityBlock
+  links: RawSankeyLink[]
+  l2_fg_pct: L2FgPctMap
 }
 
 export interface PlayerMeta {
   player_name: string
   team_id: number
   team_abbr: string
-  all: SankeyEntityBlock
-  left: SankeyEntityBlock
-  right: SankeyEntityBlock
+  links: RawSankeyLink[]
+  l2_fg_pct: L2FgPctMap
 }
 
 /** Full season JSON structure */
 export interface SankeySeasonData {
   season: string
-  league: {
-    all: SankeyLeagueBlock
-    left: SankeyLeagueBlock
-    right: SankeyLeagueBlock
-  }
+  league: SankeyLeagueBlock
   teams: Record<string, TeamMeta>
   players: Record<string, PlayerMeta>
 }
 
-/** Selection state for the sankey chart */
+/** Selection state for one half-court */
 export interface SankeySelection {
   scope: Scope
   entityId?: number
   season: string
-  courtSide: CourtSide
 }
 
 /** Node with computed vertical position for rendering */
