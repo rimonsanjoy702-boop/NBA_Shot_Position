@@ -12,8 +12,8 @@
  *   Right: viewX = 1730 - y, viewY = 250 + x
  */
 import { computed } from 'vue';
-import type { HexbinCell } from '@/models';
-import { fgPctColor } from '@/util/fgPctColor';
+import type { HexbinCell } from '../types';
+import { fgPctColor } from '../fgPctColor';
 
 const props = withDefaults(defineProps<{
   cells: HexbinCell[];

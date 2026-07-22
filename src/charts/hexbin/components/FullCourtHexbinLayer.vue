@@ -11,8 +11,8 @@
  * Clip-path ensures hexbins don't bleed past midcourt.
  */
 import { computed } from 'vue';
-import type { HexbinCell } from '@/models';
-import { fgPctColorClassic } from '@/util/fgPctColorClassic';
+import type { HexbinCell } from '../types';
+import { fgPctColorClassic } from '../fgPctColorClassic';
 
 const props = withDefaults(defineProps<{
   cells: HexbinCell[];

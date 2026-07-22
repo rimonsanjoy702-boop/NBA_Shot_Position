@@ -3,7 +3,7 @@
  * HexbinLegend.vue — Bottom color legend for hexbin heatmap.
  * Shows: FG% color bar (red → green) + size legend (small → large)
  */
-import { fgPctColor } from '@/util/fgPctColor';
+import { fgPctColor } from '../fgPctColor';
 
 const FG_STOPS = [0.0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0];
 const SIZE_EXAMPLES = [

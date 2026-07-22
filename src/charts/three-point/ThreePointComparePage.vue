@@ -67,8 +67,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
-import { useThreePointCompareStore } from "@/stores/threePointCompare";
-import ThreePointCompareChart from "@/components/ThreePointCompareChart.vue";
+import { useThreePointCompareStore } from "./store";
+import ThreePointCompareChart from "./components/ThreePointCompareChart.vue";
 
 const store = useThreePointCompareStore();
 

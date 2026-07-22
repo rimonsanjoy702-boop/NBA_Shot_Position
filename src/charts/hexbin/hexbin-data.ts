@@ -1,4 +1,4 @@
-import type { HexbinSeasonData, HexbinCell } from '@/models';
+import type { HexbinSeasonData, HexbinCell } from './types';
 
 const DATA_BASE_URL = import.meta.env.BASE_URL + 'data/';
 
@@ -64,10 +64,3 @@ export function getAvailablePlayers(data: HexbinSeasonData): { id: number; name:
   }));
 }
 
-/** All 23 NBA seasons available */
-export const ALL_SEASONS = [
-  '1997-98', '1998-99', '1999-00', '2000-01', '2001-02', '2002-03',
-  '2003-04', '2004-05', '2005-06', '2006-07', '2007-08', '2008-09',
-  '2009-10', '2010-11', '2011-12', '2012-13', '2013-14', '2014-15',
-  '2015-16', '2016-17', '2017-18', '2018-19', '2019-20',
-];

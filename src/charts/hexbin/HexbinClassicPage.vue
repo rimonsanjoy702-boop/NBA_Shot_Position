@@ -12,10 +12,10 @@
  * Three states: loading, empty, error — rendered inside the layer component.
  */
 import { ref, computed, watch } from 'vue';
-import type { HalfCourtSelection, HexbinCell } from '@/models';
-import { ALL_SEASONS } from '@/models';
-import { fetchHexbinSeason, extractHexbins, getAvailableTeams, getAvailablePlayers } from '@/hexbin-data';
-import HexbinClassicLayer from '@/components/HexbinClassicLayer.vue';
+import type { HalfCourtSelection, HexbinCell } from './types';
+import { ALL_SEASONS } from './types';
+import { fetchHexbinSeason, extractHexbins, getAvailableTeams, getAvailablePlayers } from './hexbin-data';
+import HexbinClassicLayer from './components/HexbinClassicLayer.vue';
 
 // ===== State =====
 type PageState = 'loading' | 'ready' | 'error';

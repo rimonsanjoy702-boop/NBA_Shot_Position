@@ -4,8 +4,8 @@
  * Props: seasons[], teams[], players[], half-court selection (2-way bind)
  */
 import { computed } from 'vue';
-import type { HalfCourtSelection } from '@/models';
-import { ALL_SEASONS } from '@/models';
+import type { HalfCourtSelection } from '../types';
+import { ALL_SEASONS } from '../types';
 
 const props = defineProps<{
   /** Available teams in this season's data */

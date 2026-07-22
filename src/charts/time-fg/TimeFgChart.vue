@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useTimeFilterStore } from '@/store/timeFilter'
+import { useTimeFilterStore } from './store'
 import type { EChartsOption } from 'echarts'
 
 interface TimeShotItem {

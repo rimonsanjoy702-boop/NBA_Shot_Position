@@ -1,0 +1,387 @@
+[
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/politics",
+    "size": 120
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "role/inactive",
+    "size": 379
+  },
+  {
+    "node1": "interest/politics",
+    "node2": "role/inactive",
+    "size": 120
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/business and finance",
+    "size": 180
+  },
+  {
+    "node1": "interest/business and finance",
+    "node2": "role/inactive",
+    "size": 192
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/travel",
+    "size": 5
+  },
+  {
+    "node1": "interest/travel",
+    "node2": "role/inactive",
+    "size": 5
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/animals",
+    "size": 24
+  },
+  {
+    "node1": "interest/animals",
+    "node2": "role/inactive",
+    "size": 25
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/arts and culture",
+    "size": 18
+  },
+  {
+    "node1": "interest/arts and culture",
+    "node2": "role/inactive",
+    "size": 20
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/fitness and health",
+    "size": 5
+  },
+  {
+    "node1": "interest/fitness and health",
+    "node2": "role/inactive",
+    "size": 5
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/science and technology",
+    "size": 9
+  },
+  {
+    "node1": "interest/science and technology",
+    "node2": "role/inactive",
+    "size": 9
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/entertainment",
+    "size": 4
+  },
+  {
+    "node1": "interest/entertainment",
+    "node2": "role/inactive",
+    "size": 4
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/fashion and beauty",
+    "size": 2
+  },
+  {
+    "node1": "interest/fashion and beauty",
+    "node2": "role/inactive",
+    "size": 2
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/learning and educational",
+    "size": 6
+  },
+  {
+    "node1": "interest/learning and educational",
+    "node2": "role/inactive",
+    "size": 6
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/sports",
+    "size": 1
+  },
+  {
+    "node1": "interest/sports",
+    "node2": "role/inactive",
+    "size": 3
+  },
+  {
+    "node1": "platform/weibo",
+    "node2": "interest/food and dining",
+    "size": 5
+  },
+  {
+    "node1": "interest/food and dining",
+    "node2": "role/inactive",
+    "size": 5
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/arts and culture",
+    "size": 920
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "role/general",
+    "size": 5819
+  },
+  {
+    "node1": "interest/arts and culture",
+    "node2": "role/general",
+    "size": 473
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/food and dining",
+    "size": 421
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "role/information-seeker",
+    "size": 2898
+  },
+  {
+    "node1": "interest/food and dining",
+    "node2": "role/information-seeker",
+    "size": 107
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/business and finance",
+    "size": 3117
+  },
+  {
+    "node1": "interest/business and finance",
+    "node2": "role/information-seeker",
+    "size": 1054
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/sports",
+    "size": 2220
+  },
+  {
+    "node1": "interest/sports",
+    "node2": "role/information-seeker",
+    "size": 453
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "role/information-source",
+    "size": 2909
+  },
+  {
+    "node1": "interest/arts and culture",
+    "node2": "role/information-source",
+    "size": 201
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/politics",
+    "size": 2831
+  },
+  {
+    "node1": "interest/politics",
+    "node2": "role/general",
+    "size": 1375
+  },
+  {
+    "node1": "interest/sports",
+    "node2": "role/general",
+    "size": 1264
+  },
+  {
+    "node1": "interest/politics",
+    "node2": "role/information-source",
+    "size": 962
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/fitness and health",
+    "size": 364
+  },
+  {
+    "node1": "interest/fitness and health",
+    "node2": "role/general",
+    "size": 182
+  },
+  {
+    "node1": "interest/business and finance",
+    "node2": "role/general",
+    "size": 1447
+  },
+  {
+    "node1": "interest/food and dining",
+    "node2": "role/general",
+    "size": 198
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/science and technology",
+    "size": 304
+  },
+  {
+    "node1": "interest/science and technology",
+    "node2": "role/general",
+    "size": 144
+  },
+  {
+    "node1": "interest/business and finance",
+    "node2": "role/information-source",
+    "size": 604
+  },
+  {
+    "node1": "interest/food and dining",
+    "node2": "role/information-source",
+    "size": 116
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/animals",
+    "size": 519
+  },
+  {
+    "node1": "interest/animals",
+    "node2": "role/information-seeker",
+    "size": 169
+  },
+  {
+    "node1": "interest/sports",
+    "node2": "role/information-source",
+    "size": 501
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/learning and educational",
+    "size": 190
+  },
+  {
+    "node1": "interest/learning and educational",
+    "node2": "role/information-seeker",
+    "size": 46
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/travel",
+    "size": 184
+  },
+  {
+    "node1": "interest/travel",
+    "node2": "role/information-source",
+    "size": 59
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/fashion and beauty",
+    "size": 202
+  },
+  {
+    "node1": "interest/fashion and beauty",
+    "node2": "role/general",
+    "size": 102
+  },
+  {
+    "node1": "interest/politics",
+    "node2": "role/information-seeker",
+    "size": 494
+  },
+  {
+    "node1": "interest/arts and culture",
+    "node2": "role/information-seeker",
+    "size": 244
+  },
+  {
+    "node1": "interest/travel",
+    "node2": "role/general",
+    "size": 91
+  },
+  {
+    "node1": "interest/animals",
+    "node2": "role/general",
+    "size": 263
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "interest/entertainment",
+    "size": 371
+  },
+  {
+    "node1": "interest/entertainment",
+    "node2": "role/information-seeker",
+    "size": 89
+  },
+  {
+    "node1": "interest/entertainment",
+    "node2": "role/information-source",
+    "size": 94
+  },
+  {
+    "node1": "interest/learning and educational",
+    "node2": "role/information-source",
+    "size": 52
+  },
+  {
+    "node1": "interest/fitness and health",
+    "node2": "role/information-seeker",
+    "size": 89
+  },
+  {
+    "node1": "interest/travel",
+    "node2": "role/information-seeker",
+    "size": 34
+  },
+  {
+    "node1": "interest/entertainment",
+    "node2": "role/general",
+    "size": 188
+  },
+  {
+    "node1": "interest/fashion and beauty",
+    "node2": "role/information-seeker",
+    "size": 68
+  },
+  {
+    "node1": "interest/learning and educational",
+    "node2": "role/general",
+    "size": 92
+  },
+  {
+    "node1": "interest/animals",
+    "node2": "role/information-source",
+    "size": 86
+  },
+  {
+    "node1": "interest/science and technology",
+    "node2": "role/information-source",
+    "size": 109
+  },
+  {
+    "node1": "interest/fitness and health",
+    "node2": "role/information-source",
+    "size": 93
+  },
+  {
+    "node1": "interest/fashion and beauty",
+    "node2": "role/information-source",
+    "size": 32
+  },
+  {
+    "node1": "interest/science and technology",
+    "node2": "role/information-seeker",
+    "size": 51
+  },
+  {
+    "node1": "platform/twitter",
+    "node2": "role/inactive",
+    "size": 17
+  }
+]

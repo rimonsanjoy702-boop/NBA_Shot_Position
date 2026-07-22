@@ -10,12 +10,12 @@
  *        Pinia Store integration comes later in Step 4.
  */
 import { ref, computed, watch } from 'vue';
-import type { HalfCourtSelection, HexbinCell } from '@/models';
-import { fetchHexbinSeason, extractHexbins, getAvailableTeams, getAvailablePlayers } from '@/hexbin-data';
-import CourtBaseLayer from '@/components/CourtBaseLayer.vue';
-import HexbinLayer from '@/components/HexbinLayer.vue';
-import HexbinControls from '@/components/HexbinControls.vue';
-import HexbinLegend from '@/components/HexbinLegend.vue';
+import type { HalfCourtSelection, HexbinCell } from './types';
+import { fetchHexbinSeason, extractHexbins, getAvailableTeams, getAvailablePlayers } from './hexbin-data';
+import CourtBaseLayer from './components/CourtBaseLayer.vue';
+import HexbinLayer from './components/HexbinLayer.vue';
+import HexbinControls from './components/HexbinControls.vue';
+import HexbinLegend from './components/HexbinLegend.vue';
 
 // ---- State ----
 type LoadingState = 'loading' | 'ready' | 'empty' | 'error';

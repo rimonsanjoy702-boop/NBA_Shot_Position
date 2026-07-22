@@ -1,15 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import StatisticsPage from './pages/DemoPage.vue'
 import HomePage from './pages/HomePage.vue'
-import HexbinPage from './pages/HexbinPage.vue'
-import HexbinClassicPage from './pages/HexbinClassicPage.vue'
-import FullCourtHexbinPage from './pages/FullCourtHexbinPage.vue'
-import ThreePointComparePage from './pages/ThreePointComparePage.vue'
+import HexbinPage from './charts/hexbin/HexbinPage.vue'
+import HexbinClassicPage from './charts/hexbin/HexbinClassicPage.vue'
+import FullCourtHexbinPage from './charts/hexbin/FullCourtHexbinPage.vue'
+import ThreePointComparePage from './charts/three-point/ThreePointComparePage.vue'
 
 const routes = [
     { path: '/', component: HomePage },
-    { path: '/demo', component: StatisticsPage },
     { path: '/hexbin-classic', component: HexbinClassicPage },
     { path: '/hexbin-fullcourt', component: FullCourtHexbinPage },
     { path: '/hexbin', component: HexbinPage },

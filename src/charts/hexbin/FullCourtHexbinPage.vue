@@ -9,11 +9,11 @@
  * Same hexbin JSON data as Classic view — only the coordinate transform differs.
  */
 import { ref, computed, watch } from 'vue';
-import type { HalfCourtSelection, HexbinCell } from '@/models';
-import { ALL_SEASONS } from '@/models';
-import { fetchHexbinSeason, extractHexbins, getAvailableTeams, getAvailablePlayers } from '@/hexbin-data';
-import FullCourtBaseLayer from '@/components/FullCourtBaseLayer.vue';
-import FullCourtHexbinLayer from '@/components/FullCourtHexbinLayer.vue';
+import type { HalfCourtSelection, HexbinCell } from './types';
+import { ALL_SEASONS } from './types';
+import { fetchHexbinSeason, extractHexbins, getAvailableTeams, getAvailablePlayers } from './hexbin-data';
+import FullCourtBaseLayer from './components/FullCourtBaseLayer.vue';
+import FullCourtHexbinLayer from './components/FullCourtHexbinLayer.vue';
 
 // ═══════════════════════════════════════════════════════════
 // State

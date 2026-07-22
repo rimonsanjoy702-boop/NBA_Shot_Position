@@ -29,7 +29,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted, nextTick } from "vue";
 import * as d3 from "d3";
-import type { AggDataMap, GroupAggEntry } from "@/stores/threePointCompare";
+import type { AggDataMap, GroupAggEntry } from "../store";
 
 const props = defineProps<{
   aggData: AggDataMap;

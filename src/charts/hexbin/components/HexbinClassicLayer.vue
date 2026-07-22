@@ -20,8 +20,8 @@
  *   viewY = 500 - dataY
  */
 import { computed } from 'vue';
-import type { HexbinCell } from '@/models';
-import { fgPctColorClassic } from '@/util/fgPctColorClassic';
+import type { HexbinCell } from '../types';
+import { fgPctColorClassic } from '../fgPctColorClassic';
 
 const props = withDefaults(defineProps<{
   cells: HexbinCell[];
