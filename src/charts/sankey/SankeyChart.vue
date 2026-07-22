@@ -78,9 +78,37 @@ const positionedLinks = computed(() => layout.value.positionedLinks)
 const hoveredNode = ref<string | null>(null)
 const hoveredLink = ref<number | null>(null) // link index
 
-// Compute dimmed links based on selections
+// ── Focus highlight mode ──
+const focusedNodeId = ref<string | null>(null)
+
+/** Clear focus highlight when data changes (season/scope switch) */
+watch(() => props.nodes, () => {
+  focusedNodeId.value = null
+})
+
+/** Indices of links connected to the focused node (both incoming & outgoing) */
+const connectedLinkIndices = computed(() => {
+  if (!focusedNodeId.value) return null
+  const set = new Set<number>()
+  positionedLinks.value.forEach((link, i) => {
+    if (link.source.id === focusedNodeId.value || link.target.id === focusedNodeId.value) {
+      set.add(i)
+    }
+  })
+  return set
+})
+
+// Compute dimmed links
 const linkOpacity = computed(() => {
   const dimmed = new Set<number>()
+
+  // Focus highlight mode takes priority
+  if (focusedNodeId.value && connectedLinkIndices.value) {
+    positionedLinks.value.forEach((_, i) => {
+      if (!connectedLinkIndices.value!.has(i)) dimmed.add(i)
+    })
+    return dimmed
+  }
 
   if (props.selectedTimeBin != null && props.selectedTimeBin >= 0) {
     // Only show links connected to the selected L1 node
@@ -108,6 +136,14 @@ const linkOpacity = computed(() => {
 // ============================================================================
 
 function onNodeClick(node: SankeyNodeLayout) {
+  // Toggle focus highlight
+  if (focusedNodeId.value === node.id) {
+    focusedNodeId.value = null
+  } else {
+    focusedNodeId.value = node.id
+  }
+
+  // Always emit so parent breadcrumb stays in sync
   if (node.layer === 1 && node.meta?.time_index !== undefined) {
     emit('select-time-bin', node.meta.time_index)
   } else if (node.layer === 2) {
@@ -272,6 +308,16 @@ const COLUMN_HEADERS = [
       <!-- Background -->
       <rect x="0" y="0" width="1200" height="820" fill="transparent" />
 
+      <!-- Filters -->
+      <defs>
+        <filter id="dim-filter">
+          <feColorMatrix type="saturate" values="0.08" />
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.35" />
+          </feComponentTransfer>
+        </filter>
+      </defs>
+
       <!-- Column headers -->
       <g class="column-headers">
         <text
@@ -310,6 +356,7 @@ const COLUMN_HEADERS = [
           :d="link.path"
           :fill="link.color"
           :opacity="linkOpacity.has(i) ? 0.08 : (hoveredLink === i ? 0.85 : 0.5)"
+          :filter="(focusedNodeId && linkOpacity.has(i)) ? 'url(#dim-filter)' : undefined"
           :style="{
             transition: 'opacity 0.2s ease',
             cursor: 'pointer',
@@ -327,7 +374,7 @@ const COLUMN_HEADERS = [
         <g
           v-for="node in positionedNodes"
           :key="node.id"
-          :class="['sankey-node', { selected: isSelected(node) }]"
+          :class="['sankey-node', { selected: isSelected(node), focused: focusedNodeId === node.id }]"
           :style="{ cursor: 'pointer' }"
           @click="onNodeClick(node)"
           @mouseenter="showTooltip($event, nodeTooltip(node))"
@@ -348,6 +395,7 @@ const COLUMN_HEADERS = [
               (props.selectedTimeBin != null && props.selectedTimeBin >= 0 && node.layer !== 1)
                 ? 0.4 : 1
             "
+            :filter="(focusedNodeId && focusedNodeId !== node.id) ? 'url(#dim-filter)' : undefined"
             :style="{
               transition: 'opacity 0.2s ease, stroke-width 0.2s ease',
             }"
@@ -531,5 +579,10 @@ function nodeTooltip(node: SankeyNode): string {
 
 .sankey-node.selected rect {
   filter: brightness(1.3);
+}
+
+.sankey-node.focused rect {
+  stroke: rgba(255, 255, 255, 0.85);
+  stroke-width: 2.5px;
 }
 </style>
