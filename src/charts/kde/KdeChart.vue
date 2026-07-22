@@ -93,16 +93,21 @@ function render() {
 
   // KDE曲线配置
   kdeChart.setOption({
-    backgroundColor: "#ffffff",
-    title: { text: "NBA投篮距离KDE双峰演化", left: 10 },
-    tooltip: { trigger: "axis" },
+    backgroundColor: 'transparent',
+    tooltip: { trigger: "axis", backgroundColor: 'rgba(13,17,23,0.95)', borderColor: 'rgba(255,255,255,0.1)', textStyle: { color: '#e6edf3', fontSize: 13 } },
+    title: { text: "NBA投篮距离KDE双峰演化", left: 10, textStyle: { color: '#e6edf3' } },
+    grid: { left: 44, right: 20, top: 40, bottom: 32 },
     xAxis: {
       type: "value",
       name: "距离 ft",
+      nameTextStyle: { color: '#8b949e' },
       min: 0,
-      max: 40
+      max: 40,
+      axisLabel: { color: '#8b949e' },
+      axisLine: { lineStyle: { color: 'rgba(255,255,255,0.15)' } },
+      splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } }
     },
-    yAxis: { name: "概率密度" },
+    yAxis: { name: "概率密度", nameTextStyle: { color: '#8b949e' }, axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } } },
     series: [
       {
         name: "1998赛季",
@@ -122,7 +127,7 @@ function render() {
         name: curr.season,
         type: "line",
         data: curr.curve.map(i => [i.dist, i.density]),
-        lineStyle: { width: 3, color: "#222222" },
+        lineStyle: { width: 3, color: "#e6edf3" },
         symbol: "none"
       }
     ]
@@ -130,10 +135,11 @@ function render() {
 
   // 双峰柱状图
   barChart.setOption({
-    backgroundColor: "#ffffff",
-    title: { text: "历年双峰指数变化" },
-    xAxis: { data: list.map(s => s.season) },
-    yAxis: {},
+    backgroundColor: 'transparent',
+    tooltip: { backgroundColor: 'rgba(13,17,23,0.95)', borderColor: 'rgba(255,255,255,0.1)', textStyle: { color: '#e6edf3', fontSize: 13 } },
+    title: { text: "历年双峰指数变化", textStyle: { color: '#e6edf3' } },
+    xAxis: { data: list.map(s => s.season), axisLabel: { color: '#8b949e' }, axisLine: { lineStyle: { color: 'rgba(255,255,255,0.15)' } } },
+    yAxis: { axisLabel: { color: '#8b949e' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.06)' } } },
     series: [{
       type: "bar",
       data: list.map((item, i) => ({
@@ -180,18 +186,18 @@ onUnmounted(() => {
 <style scoped>
 .wrap {
   padding: 20px;
-  background: #fff;
+  background: var(--bg-root, #0d1117);
 }
 .chart-kde {
   width: 100%;
   height: 420px;
-  border: 1px #eee solid;
+  border: 1px solid var(--border-card, rgba(255,255,255,0.08));
 }
 .chart-bar {
   width: 100%;
   height: 260px;
   margin-top: 20px;
-  border: 1px #eee solid;
+  border: 1px solid var(--border-card, rgba(255,255,255,0.08));
 }
 .card-row {
   display: flex;
@@ -201,18 +207,19 @@ onUnmounted(() => {
 .stat-card {
   flex: 1;
   padding: 12px;
-  background: #f6f6f6;
+  background: var(--bg-card, rgba(255,255,255,0.04));
   text-align: center;
   border-radius: 6px;
+  border: 1px solid var(--border-card, rgba(255,255,255,0.08));
 }
 .num {
   font-size: 24px;
   font-weight: bold;
-  color: #222;
+  color: var(--text-primary, #e6edf3);
 }
 .label {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary, #8b949e);
   margin-top: 4px;
 }
 .control {
@@ -220,7 +227,22 @@ onUnmounted(() => {
   align-items: center;
   gap: 10px;
   margin: 16px 0;
+  color: var(--text-secondary, #8b949e);
 }
+.control button {
+  padding: 3px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-input, rgba(255,255,255,0.12));
+  background: var(--bg-input, rgba(255,255,255,0.06));
+  color: var(--text-secondary, #8b949e);
+  cursor: pointer;
+  font-size: 12px;
+}
+.control button:hover {
+  background: var(--bg-card-hover, rgba(255,255,255,0.07));
+  color: var(--text-primary, #e6edf3);
+}
+.control span { color: var(--text-primary, #e6edf3); }
 .slider {
   flex: 1;
 }

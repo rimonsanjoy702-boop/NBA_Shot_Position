@@ -13,14 +13,12 @@ import { fetchSankeySeason, extractSankeyData } from '@/charts/sankey/sankey-dat
 const threeStore = useThreePointCompareStore()
 const aggData = ref<AggDataMap>({})
 const seasons3p = ref<string[]>([])
-const showMid = ref(false)
 
 onMounted(async () => {
   // 三分数据
   try { await threeStore.loadAll() } catch {}
   aggData.value = threeStore.aggData
   seasons3p.value = threeStore.seasonList
-  showMid.value = threeStore.showMid
 
   // 时间-FG 数据
   try {
@@ -56,7 +54,6 @@ const sankeyState = ref<'loading' | 'ready' | 'empty'>('loading')
         v-if="seasons3p.length"
         :aggData="aggData"
         :seasons="seasons3p"
-        :showMid="showMid"
       />
       <SankeyChart
         :state="sankeyState"

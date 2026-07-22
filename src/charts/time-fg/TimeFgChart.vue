@@ -40,7 +40,8 @@ watch(() => timeStore.timeCurveData, (dataList: TimeShotItem[]) => {
   chartOpt.value = {
     title: {
       text: '各时段左右半场投篮命中率与出手次数',
-      left: 'center'
+      left: 'center',
+      textStyle: { color: '#e6edf3' }
     },
     tooltip: {
       trigger: 'axis',
@@ -55,7 +56,8 @@ watch(() => timeStore.timeCurveData, (dataList: TimeShotItem[]) => {
         '左半场出手次数',
         '右半场出手次数'
       ],
-      top: 30
+      top: 30,
+      textStyle: { color: '#8b949e' }
     },
     xAxis: {
       type: 'category',

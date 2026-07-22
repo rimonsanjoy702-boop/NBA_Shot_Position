@@ -34,7 +34,6 @@ import type { AggDataMap, GroupAggEntry } from "../store";
 const props = defineProps<{
   aggData: AggDataMap;
   seasons: string[];
-  showMid: boolean;
 }>();
 
 const chart3PaDom = ref<HTMLDivElement | null>(null);
@@ -46,7 +45,7 @@ const chartWinDom = ref<HTMLDivElement | null>(null);
 // ==========================================================================
 
 const SVG_W = 1880;
-const SVG_H = 420;
+const SVG_H = 500;
 const MARGIN = { top: 24, right: 40, bottom: 48, left: 60 };
 const PLOT_W = SVG_W - MARGIN.left - MARGIN.right;
 const PLOT_H = SVG_H - MARGIN.top - MARGIN.bottom;
@@ -61,6 +60,8 @@ const VERTICAL_MARKS = [
   { season: "2014-15", label: "2014-15 先行者窗口终点",  color: "#e63946" },
   { season: "2018-19", label: "2018-19 落后者转型起点",  color: "#457b9d" },
 ];
+
+const GROUPS_SHOWN = ["leader", "laggard", "mid"] as const;
 
 const Y_RANGES: Record<string, [number, number]> = {
   "3pa":  [0, 45],
@@ -174,7 +175,7 @@ function addTooltip(
   g: d3.Selection<SVGGElement, unknown, null, undefined>,
   seasons: string[],
   aggData: AggDataMap,
-  showMid: boolean,
+  _showMid: boolean,
   metric: string,
 ) {
   // Transparent overlay for mouse tracking
@@ -211,9 +212,7 @@ function addTooltip(
     .attr("stroke-dasharray", "4,4")
     .style("visibility", "hidden");
 
-  const groupsShown = showMid
-    ? (["leader", "laggard", "mid"] as const)
-    : (["leader", "laggard"] as const);
+  const groupsShown = GROUPS_SHOWN;
 
   overlay.on("mousemove", (event: MouseEvent) => {
     const [mx] = d3.pointer(event, g.node());
@@ -302,16 +301,14 @@ function drawChart(
   container: HTMLDivElement,
   seasons: string[],
   aggData: AggDataMap,
-  showMid: boolean,
+  _showMid: boolean,
   metric: "avg_3pa" | "avg_3par" | "avg_win_pct",
   yRange: [number, number],
 ) {
   const ctx = makeSvg(container, yRange, seasons);
   const { svg, xScale, yScale, g } = ctx;
 
-  const groupsShown = showMid
-    ? (["leader", "laggard", "mid"] as const)
-    : (["leader", "laggard"] as const);
+  const groupsShown = GROUPS_SHOWN;
 
   // Line generator
   const lineGen = d3.line<[number, number]>()
@@ -352,6 +349,39 @@ function drawChart(
       .attr("fill", cfg.stroke);
   });
 
+  // ---- Legend below chart footer ----
+  let legendX = MARGIN.left;
+  const legendY = PLOT_H + 108;
+  const groupsForLegend = [
+    { key: 'leader',  label: '先行者 14队' },
+    { key: 'mid',     label: '过渡组 4队' },
+    { key: 'laggard', label: '落后者 19队' },
+  ];
+  groupsForLegend.forEach(gc => {
+    const cfg = GROUP_CONFIG[gc.key];
+    g.append("line")
+      .attr("x1", legendX).attr("x2", legendX + 30)
+      .attr("y1", legendY).attr("y2", legendY)
+      .attr("stroke", cfg.stroke)
+      .attr("stroke-width", cfg.lw)
+      .attr("stroke-dasharray", cfg.dash ?? "none");
+    g.append("text")
+      .attr("x", legendX + 36)
+      .attr("y", legendY + 4)
+      .attr("fill", "var(--text-secondary, #8b949e)")
+      .attr("font-size", "12")
+      .text(gc.label);
+    legendX += 150;
+  });
+
+  // ---- Hint text ----
+  g.append("text")
+    .attr("x", MARGIN.left)
+    .attr("y", legendY + 24)
+    .attr("fill", "var(--text-tertiary, #5c6670)")
+    .attr("font-size", "11")
+    .text("实线 = 三分数据（3PA / 3PAr），虚线 = 常规赛胜率");
+
   // ---- Vertical reference lines ----
   VERTICAL_MARKS.forEach((vm) => {
     const vx = xScale(vm.season);
@@ -371,7 +401,7 @@ function drawChart(
       .attr("x", vx + 6)
       .attr("y", 14)
       .attr("fill", vm.color)
-      .attr("font-size", "11")
+      .attr("font-size", "13")
       .text(vm.label);
   });
 
@@ -390,7 +420,7 @@ function drawChart(
         .attr("x", x20 + 14)
         .attr("y", PLOT_H - 8)
         .attr("fill", "var(--text-tertiary, #5c6670)")
-        .attr("font-size", "10")
+        .attr("font-size", "13")
         .text("投篮数据截止");
     }
   }
@@ -427,19 +457,19 @@ function drawChart(
 // ==========================================================================
 
 watch(
-  () => [props.aggData, props.seasons, props.showMid] as const,
-  async ([aggData, seasons, showMid]) => {
+  () => [props.aggData, props.seasons] as const,
+  async ([aggData, seasons]) => {
     if (!aggData || Object.keys(aggData).length === 0) return;
     await nextTick();
 
     if (chart3PaDom.value) {
-      drawChart(chart3PaDom.value, seasons, aggData, showMid, "avg_3pa", Y_RANGES["3pa"]);
+      drawChart(chart3PaDom.value, seasons, aggData, false, "avg_3pa", Y_RANGES["3pa"]);
     }
     if (chart3ParDom.value) {
-      drawChart(chart3ParDom.value, seasons, aggData, showMid, "avg_3par", Y_RANGES["3par"]);
+      drawChart(chart3ParDom.value, seasons, aggData, false, "avg_3par", Y_RANGES["3par"]);
     }
     if (chartWinDom.value) {
-      drawChart(chartWinDom.value, seasons, aggData, showMid, "avg_win_pct", Y_RANGES["win"]);
+      drawChart(chartWinDom.value, seasons, aggData, false, "avg_win_pct", Y_RANGES["win"]);
     }
   },
   { immediate: false },
@@ -448,17 +478,17 @@ watch(
 // Initial draw
 onMounted(async () => {
   await nextTick();
-  const { aggData, seasons, showMid } = props;
+  const { aggData, seasons } = props;
   if (!aggData || Object.keys(aggData).length === 0) return;
 
   if (chart3PaDom.value) {
-    drawChart(chart3PaDom.value, seasons, aggData, showMid, "avg_3pa", Y_RANGES["3pa"]);
+    drawChart(chart3PaDom.value, seasons, aggData, false, "avg_3pa", Y_RANGES["3pa"]);
   }
   if (chart3ParDom.value) {
-    drawChart(chart3ParDom.value, seasons, aggData, showMid, "avg_3par", Y_RANGES["3par"]);
+    drawChart(chart3ParDom.value, seasons, aggData, false, "avg_3par", Y_RANGES["3par"]);
   }
   if (chartWinDom.value) {
-    drawChart(chartWinDom.value, seasons, aggData, showMid, "avg_win_pct", Y_RANGES["win"]);
+    drawChart(chartWinDom.value, seasons, aggData, false, "avg_win_pct", Y_RANGES["win"]);
   }
 });
 
