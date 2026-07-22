@@ -167,24 +167,24 @@ const L1_COLORS = [
   '#43BEE5',  // Q4后 — 南海岸蓝
 ]
 
-/** L2: orange→red gradient (7 shot zones) */
+/** L2: gold→magenta gradient (7 shot zones) */
 const L2_COLORS: Record<string, string> = {
-  'RA':    '#FFB347',  // Restricted Area — 亮橙黄
-  'Paint': '#FF8C00',  // Paint (Non-RA) — 标准橙
-  'MR':    '#FF6A00',  // Mid-Range — 橘红色
-  'LC3':   '#FF4D00',  // Left Corner 3 — 朱红色
-  'RC3':   '#FF2400',  // Right Corner 3 — 鲜红色
-  'AB3':   '#FF0F33',  // Above the Break 3 — 亮绯红
-  'BC':    '#FF0055',  // Backcourt — 玫瑰红
+  'RA':    '#FFCC00',  // Restricted Area — 亮金橙
+  'Paint': '#FF8500',  // Paint (Non-RA) — 霓虹橙
+  'MR':    '#FF3C00',  // Mid-Range — 炽热朱红
+  'LC3':   '#FF0015',  // Left Corner 3 — 纯粹亮红
+  'RC3':   '#F00048',  // Right Corner 3 — 亮艳绯红
+  'AB3':   '#D60073',  // Above the Break 3 — 艳丽玫瑰
+  'BC':    '#B30086',  // Backcourt — 深邃洋红
 }
 
-/** L3: Bulls → Cavaliers → Rockets (5 action types) */
+/** L3: wide-span cyan→violet gradient (5 action types) */
 const L3_COLORS: Record<string, string> = {
-  'Dunk':  '#CE1141',  // 扣篮 — 公牛红
-  'Layup': '#418FDE',  // 上篮 — 公牛旗蓝
-  'Hook':  '#860038',  // 勾手 — 骑士酒红
-  'Tip':   '#FDBB30',  // 补篮 — 骑士金
-  'Jump':  '#F3C000',  // 跳投 — 火箭芥末黄
+  'Dunk':  '#00FFB3',  // 扣篮 — 荧光水光青
+  'Layup': '#00D4FF',  // 上篮 — 冰川蓝
+  'Hook':  '#007BFF',  // 勾手 — 经典电光蓝
+  'Tip':   '#3D26FF',  // 补篮 — 幽灵蓝
+  'Jump':  '#8A00FF',  // 跳投 — 赛博紫罗兰
 }
 
 /** L4: status colors */

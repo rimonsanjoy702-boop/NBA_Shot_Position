@@ -210,11 +210,11 @@ export function computeLayout(
       color = L1_C[srcNode.meta?.time_index ?? 0] || L1_C[0]
     } else if (srcNode.layer === 2) {
       const zk = srcNode.id.replace('L2_', '')
-      const L2_C: Record<string,string> = {RA:'#FFB347',Paint:'#FF8C00',MR:'#FF6A00',LC3:'#FF4D00',RC3:'#FF2400',AB3:'#FF0F33',BC:'#FF0055'}
+      const L2_C: Record<string,string> = {RA:'#FFCC00',Paint:'#FF8500',MR:'#FF3C00',LC3:'#FF0015',RC3:'#F00048',AB3:'#D60073',BC:'#B30086'}
       color = L2_C[zk] || '#C4CED4'
     } else {
       const ak = srcNode.id.replace('L3_', '')
-      const L3_C: Record<string,string> = {Dunk:'#CE1141',Layup:'#418FDE',Hook:'#860038',Tip:'#FDBB30',Jump:'#F3C000'}
+      const L3_C: Record<string,string> = {Dunk:'#00FFB3',Layup:'#00D4FF',Hook:'#007BFF',Tip:'#3D26FF',Jump:'#8A00FF'}
       color = L3_C[ak] || '#CE1141'
     }
 
