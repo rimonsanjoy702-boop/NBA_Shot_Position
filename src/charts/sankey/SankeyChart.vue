@@ -355,20 +355,25 @@ const COLUMN_HEADERS = [
             @mouseleave="hoveredNode = null"
           />
 
-          <!-- Node label: line 1 = English name from data, line 2 = Chinese translation -->
+          <!-- Node label: only show when node is tall enough -->
+          <!-- line 1: English name -->
           <text
+            v-if="node.height >= 16"
             :x="node.x + colWidth(node.layer) / 2"
-            :y="node.y + node.height / 2 - 2"
+            :y="node.y + node.height / 2 - 1"
             text-anchor="middle"
             :fill="nodeTextColor(node, 'en')"
             font-size="10"
             font-weight="500"
+            :clip-path="`url(#clip-${node.id})`"
           >
             {{ node.label }}
           </text>
+          <!-- line 2: Chinese translation -->
           <text
+            v-if="node.height >= 26"
             :x="node.x + colWidth(node.layer) / 2"
-            :y="node.y + node.height / 2 + 13"
+            :y="node.y + node.height / 2 + 12"
             text-anchor="middle"
             :fill="nodeTextColor(node, 'cn')"
             font-size="9"
