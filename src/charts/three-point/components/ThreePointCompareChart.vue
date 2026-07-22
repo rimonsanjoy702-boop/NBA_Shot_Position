@@ -369,7 +369,7 @@ function drawChart(
       .attr("x", legendX + 36)
       .attr("y", legendY + 4)
       .attr("fill", "var(--text-secondary, #8b949e)")
-      .attr("font-size", "22")
+      .attr("font-size", "20")
       .text(gc.label);
     legendX += 150;
   });
@@ -379,7 +379,7 @@ function drawChart(
     .attr("x", MARGIN.left)
     .attr("y", legendY + 24)
     .attr("fill", "var(--text-tertiary, #5c6670)")
-    .attr("font-size", "20")
+    .attr("font-size", "18")
     .text("实线 = 三分数据（3PA / 3PAr），虚线 = 常规赛胜率");
 
   // ---- Vertical reference lines ----
