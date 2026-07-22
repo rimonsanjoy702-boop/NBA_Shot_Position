@@ -67,6 +67,7 @@ def derive_season(game_date: int) -> str:
 
 
 TIME_BIN_LABELS = ["Q1前","Q1后","Q2前","Q2后","Q3前","Q3后","Q4前","Q4后"]
+TIME_BIN_LABELS_EN = ["Q1 Front","Q1 Back","Q2 Front","Q2 Back","Q3 Front","Q3 Back","Q4 Front","Q4 Back"]
 
 def compute_time_bin(period: int, minutes_remaining: int) -> int | None:
     if period > 4:
@@ -176,7 +177,7 @@ def build_league_data(agg: dict, min_count: int) -> dict:
     nodes = []
     for tb in range(8):
         if l1_size.get(tb, 0) > 0:
-            nodes.append({"id":f"L1_{tb}","layer":1,"label":TIME_BIN_LABELS[tb],"size":l1_size[tb],"meta":{"time_index":tb}})
+            nodes.append({"id":f"L1_{tb}","layer":1,"label":TIME_BIN_LABELS_EN[tb],"size":l1_size[tb],"meta":{"time_index":tb}})
     for z in ZONE_ORDER:
         if l2_size.get(z, 0) > 0:
             t = l2_size[z]; m = l2_made.get(z, 0)
