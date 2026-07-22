@@ -396,7 +396,7 @@ function drawChart(
     // Label at top
     g.append("text")
       .attr("x", vx + 6)
-      .attr("y", 14)
+      .attr("y", 14 + 22)
       .attr("fill", vm.color)
       .attr("font-size", "22")
       .text(vm.label);
@@ -415,7 +415,7 @@ function drawChart(
 
       g.append("text")
         .attr("x", x20 + 14)
-        .attr("y", PLOT_H - 8)
+        .attr("y", PLOT_H - 8 + 22)
         .attr("fill", "var(--text-tertiary, #5c6670)")
         .attr("font-size", "22")
         .text("投篮数据截止");
