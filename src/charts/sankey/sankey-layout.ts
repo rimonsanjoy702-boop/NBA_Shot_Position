@@ -60,7 +60,7 @@ export function layoutNodes(nodes: SankeyNode[]): SankeyNodeLayout[] {
 
     // Sort: L1 by time_index, L2 by ZONE_ORDER, L3 by ACTION_ORDER, L4 Made then Missed
     const ZONE_ORDER = ['L2_RA','L2_Paint','L2_MR','L2_LC3','L2_RC3','L2_AB3','L2_BC']
-    const ACTION_ORDER = ['L3_Dunk','L3_Layup','L3_Jump','L3_Hook','L3_Tip']
+    const ACTION_ORDER = ['L3_Dunk','L3_Layup','L3_Hook','L3_Tip','L3_Jump']
 
     layerNodes.sort((a, b) => {
       if (a.layer === 1 && a.meta?.time_index !== undefined) {
