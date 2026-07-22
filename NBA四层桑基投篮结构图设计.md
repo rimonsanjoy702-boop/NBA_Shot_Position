@@ -1,6 +1,6 @@
 # NBA 四层桑基投篮结构图设计
 
-> **版本**: v4  
+> **版本**: v5  
 > **最后更新**: 2026-07-22  
 > **关联文档**: [多视图交互与联动方案设计](./多视图交互与联动方案设计.md)、[NBA全联盟历年投篮分布桑基图设计](./NBA全联盟历年投篮分布桑基图设计.md)（v1，已废弃）、[Time-FG% 衰减曲线设计](./) 、[Hexbin 热力图设计](./)
 
@@ -268,9 +268,9 @@ time_bin × court_side × shot_zone_basic × action_type_group × shot_made_flag
     "1610612744": {
       "team_name": "Golden State Warriors",
       "abbr": "GSW",
-      "all": { "nodes": [...], "links": [...] },
-      "left": { "nodes": [...], "links": [...] },
-      "right": { "nodes": [...], "links": [...] }
+      "all": { "links": [...], "l2_fg_pct": {...} },
+      "left": { "links": [...], "l2_fg_pct": {...} },
+      "right": { "links": [...], "l2_fg_pct": {...} }
     }
   },
   "players": {
@@ -278,15 +278,27 @@ time_bin × court_side × shot_zone_basic × action_type_group × shot_made_flag
       "player_name": "Stephen Curry",
       "team_id": 1610612744,
       "team_abbr": "GSW",
-      "all": { "nodes": [...], "links": [...] },
-      "left": { "nodes": [...], "links": [...] },
-      "right": { "nodes": [...], "links": [...] }
+      "all": { "links": [...], "l2_fg_pct": {...} },
+      "left": { "links": [...], "l2_fg_pct": {...} },
+      "right": { "links": [...], "l2_fg_pct": {...} }
     }
   }
 }
 ```
 
+**关键设计决策——teams/players 不存 nodes，仅存 links + l2_fg_pct**：
+
+22 个节点 ID 是全局常量（L1_0~L1_7, L2_RA~L2_BC, L3_Dunk~L3_Tip, L4_Made/Missed），id、layer、label、color 对任何实体都相同。唯一随实体变化的是 size 和 L2 命中率：
+- **size**：可由 links 推导（对每列节点，sum(以其为 source/target 的 link.value)）
+- **L2 fg_pct**：无法仅从 links 推导（L2→L3 的命中信息在聚合中丢失），因此单独存 `l2_fg_pct` 字段
+
+此优化将单赛季 JSON 从 ~20MB 降至约 0.3–1.5MB（取决于球员数量），23 赛季总计从 ~460MB 降至 ~15–20MB。
+
+**紧凑输出格式**：预处理脚本使用 `json.dump(..., separators=(',', ':'))` 输出紧凑 JSON，不添加缩进空白，进一步节省 40-50% 体积。
+
 ### 6.3 节点记录
+
+仅存储在 `league.{side}.nodes` 中，作为全局模板。22 个节点，每层固定：
 
 ```typescript
 interface SankeyNode {
@@ -294,7 +306,7 @@ interface SankeyNode {
                         // "L3_Dunk", "L3_Layup", ..., "L4_Made", "L4_Missed"
   layer: 1 | 2 | 3 | 4;
   label: string;       // "Q1前", "Restricted Area", "Dunk", "Made"
-  size: number;        // 该节点的总出手数
+  size: number;        // 该节点的总出手数（联盟级别）
   meta?: {
     fg_pct?: number;   // L2 节点附命中率
     color?: string;    // L2 节点附区域色
@@ -304,6 +316,8 @@ interface SankeyNode {
 ```
 
 ### 6.4 连线记录
+
+存储在 `league.{side}.links`、`teams.{tid}.{side}.links`、`players.{pid}.{side}.links` 中。
 
 ```typescript
 interface SankeyLink {
@@ -321,7 +335,62 @@ interface SankeyLink {
 | 单球员 | ≥ 3 | 球员样本量小 |
 | Backcourt | ≥ 1 | 保留存在即有价值 |
 
----
+### 6.6 前端 entities 节点重建逻辑
+
+前端加载 entity（球队/球员）数据时，从 league 的 nodes 模板 + entity 的 links 重建完整 nodes：
+
+```typescript
+function reconstructEntityData(
+  leagueNodes: SankeyNode[],   // 模板（id/label/layer/color）
+  entityLinks: SankeyLink[],   // entity 的连线
+  l2FgPct: Record<string, number>,  // entity 的 L2 命中率 map
+): { nodes: SankeyNode[]; links: SankeyLink[] } {
+  // 1. 从 links 推导各节点 size
+  const sizeMap: Record<string, number> = {};
+  for (const link of entityLinks) {
+    // source 节点流出 = link.value
+    sizeMap[link.source] = (sizeMap[link.source] || 0) + link.value;
+    // target 节点流入也计入（L1 只有流出，L4 只有流入）
+  }
+
+  // 2. 用 league 模板克隆节点，覆盖 size 和 fg_pct
+  const nodes = leagueNodes.map(n => {
+    const node = { ...n, size: sizeMap[n.id] || 0 };
+    if (n.layer === 2 && l2FgPct) {
+      // L2 节点：覆盖 fg_pct 为 entity 自己的
+      const zoneKey = n.id.replace('L2_', '');
+      node.meta = { ...n.meta, fg_pct: l2FgPct[zoneKey] ?? n.meta?.fg_pct };
+    }
+    return node;
+  }).filter(n => n.size > 0);  // 去掉 size=0 的节点（如某队没有后场投篮）
+
+  return { nodes, links: entityLinks };
+}
+```
+
+**推导正确性保证**：
+- L1 节点 size = sum(以其为 source 的 L1→L2 link.value)（L1 只流出）
+- L2 节点 size = max(sum 流出, sum 流入)（两端相等，取其一即可）
+- L3 节点 size = sum(以其为 source 的 L3→L4 link.value)（L3 只流出）
+- L4 节点 size = sum(以其为 target 的 L3→L4 link.value)（L4 只流入）
+- L2 fg_pct：从 `l2_fg_pct` 直接读取（预处理阶段计算好）
+
+### 6.7 l2_fg_pct 字段说明
+
+```typescript
+// 7 个 L2 区域的命中率，key 为 zone 短码
+interface L2FgPctMap {
+  "RA": number;     // Restricted Area 命中率
+  "Paint": number;  // Paint (Non-RA) 命中率
+  "MR": number;     // Mid-Range 命中率
+  "LC3": number;    // Left Corner 3 命中率
+  "RC3": number;    // Right Corner 3 命中率
+  "AB3": number;    // Above the Break 3 命中率
+  "BC": number;     // Backcourt 命中率
+}
+```
+
+JSON 中每个 entity 的每个 court_side 块附带一个 `l2_fg_pct` 对象，7 个 key，约 200 bytes。此字段存在的唯一原因是：**L2 区域命中率 = 该区域中 Made/(Made+Missed)，而 links 只有两两层级之间的流量，L2→L3 这一步丢失了命中/不中信息，无法仅从 links 反向算出**。
 
 ## 7. Pinia Store 扩展
 
