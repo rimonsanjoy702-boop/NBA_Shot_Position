@@ -481,5 +481,68 @@
       "avg_win_pct": 0.5351,
       "team_cnt": 17
     }
+  },
+  "2020-21": {
+    "season": "2020-21",
+    "leader": {
+      "avg_3pa": null,
+      "avg_3par": null,
+      "avg_win_pct": 0.4213,
+      "team_cnt": 6
+    },
+    "laggard": {
+      "avg_3pa": null,
+      "avg_3par": null,
+      "avg_win_pct": 0.4741,
+      "team_cnt": 7
+    },
+    "mid": {
+      "avg_3pa": null,
+      "avg_3par": null,
+      "avg_win_pct": 0.5385,
+      "team_cnt": 17
+    }
+  },
+  "2021-22": {
+    "season": "2021-22",
+    "leader": {
+      "avg_3pa": null,
+      "avg_3par": null,
+      "avg_win_pct": 0.4125,
+      "team_cnt": 6
+    },
+    "laggard": {
+      "avg_3pa": null,
+      "avg_3par": null,
+      "avg_win_pct": 0.4827,
+      "team_cnt": 7
+    },
+    "mid": {
+      "avg_3pa": null,
+      "avg_3par": null,
+      "avg_win_pct": 0.5379,
+      "team_cnt": 17
+    }
+  },
+  "2022-23": {
+    "season": "2022-23",
+    "leader": {
+      "avg_3pa": null,
+      "avg_3par": null,
+      "avg_win_pct": 0.4695,
+      "team_cnt": 6
+    },
+    "laggard": {
+      "avg_3pa": null,
+      "avg_3par": null,
+      "avg_win_pct": 0.5069,
+      "team_cnt": 7
+    },
+    "mid": {
+      "avg_3pa": null,
+      "avg_3par": null,
+      "avg_win_pct": 0.5079,
+      "team_cnt": 17
+    }
   }
 }

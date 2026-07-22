@@ -143,7 +143,7 @@ function makeSvg(
     .attr("transform", `translate(0,${PLOT_H})`)
     .call(
       d3.axisBottom(xScale)
-        .tickValues(xScale.domain().filter((_, i) => i % 2 === 0))
+        .tickValues(xScale.domain().filter((_, i) => i % 1 === 0))
     );
 
   xAxis.selectAll("text")
@@ -231,13 +231,22 @@ function addTooltip(
     const entry = aggData[season];
 
     // Build tooltip lines
-    const lines: string[] = [season];
+    const lines: string[] = [season]
+    const noShotData = season >= "2020-21"
+    if (noShotData && metric !== "avg_win_pct") {
+      lines.push("(无投篮数据)")
+    }
     groupsShown.forEach((gtype) => {
       const cfg = GROUP_CONFIG[gtype];
       const grp = entry?.[gtype];
       if (!grp) return;
       const val = getValue(grp, metric);
-      if (val == null) return;
+      if (val == null) {
+        if (metric !== "avg_win_pct" && noShotData) {
+          // shot data not available for this season
+        }
+        return;
+      }
       let valStr: string
       if (metric === "avg_win_pct") {
         valStr = (val * 100).toFixed(1) + "%"
@@ -365,6 +374,26 @@ function drawChart(
       .attr("font-size", "11")
       .text(vm.label);
   });
+
+  // ---- Data-cutoff line for 3PA / 3PAr charts (2020 onwards = win% only) ----
+  if (metric !== "avg_win_pct") {
+    const x20 = xScale("2019-20");
+    if (x20 != null) {
+      g.append("line")
+        .attr("x1", x20 + 8).attr("x2", x20 + 8)
+        .attr("y1", 0).attr("y2", PLOT_H)
+        .attr("stroke", "var(--text-tertiary, #5c6670)")
+        .attr("stroke-width", 2)
+        .attr("stroke-dasharray", "2,6");
+
+      g.append("text")
+        .attr("x", x20 + 14)
+        .attr("y", PLOT_H - 8)
+        .attr("fill", "var(--text-tertiary, #5c6670)")
+        .attr("font-size", "10")
+        .text("投篮数据截止");
+    }
+  }
 
   // ---- Region highlights ----
   // 2014-15 → 2018-19 window

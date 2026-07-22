@@ -44,6 +44,8 @@ export interface SeasonAggData {
 
 export type AggDataMap = Record<string, SeasonAggData>;
 
+/** X-axis start season — the year the leader/laggard divergence became visible */
+const X_START = "2008-09";
 export const useThreePointCompareStore = defineStore("threePointCompare", () => {
   // -------- state --------
   const rawData = ref<TeamSeasonRaw[]>([]);
@@ -58,7 +60,9 @@ export const useThreePointCompareStore = defineStore("threePointCompare", () => 
 
   // -------- derived --------
   const seasonList = computed<string[]>(() => {
-    return Object.keys(aggData.value).sort();
+    return Object.keys(aggData.value)
+      .filter((s) => s >= X_START)
+      .sort();
   });
 
   const leaderTeams = computed<GroupClassifyEntry[]>(() =>
