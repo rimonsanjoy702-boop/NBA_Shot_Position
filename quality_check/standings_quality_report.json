@@ -1,0 +1,233 @@
+{
+  "metadata": {
+    "source": "stats.nba.com via nba_api (subprocess-per-season)",
+    "seasons_range": "1997-98 ~ 2022-23",
+    "seasons_count": 26,
+    "total_rows": 773,
+    "failed_seasons": [],
+    "structural_failures": [],
+    "api_fetch_duration_s": 44.9,
+    "timestamp": "2026-07-22T04:20:01.256615+00:00"
+  },
+  "checks": {
+    "Q1_season_coverage": {
+      "expected_seasons": 26,
+      "fetched_ok": 26,
+      "fetched_failed": 0,
+      "failed_seasons": [],
+      "total_api_calls": 26
+    },
+    "Q2_team_count": {
+      "anomalies": []
+    },
+    "Q3_games_played": {
+      "1997-98": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "1998-99": {
+        "min": 50,
+        "max": 50,
+        "avg": 50.0,
+        "expected": "50-50",
+        "pass": true
+      },
+      "1999-00": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2000-01": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2001-02": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2002-03": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2003-04": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2004-05": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2005-06": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2006-07": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2007-08": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2008-09": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2009-10": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2010-11": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2011-12": {
+        "min": 66,
+        "max": 66,
+        "avg": 66.0,
+        "expected": "66-66",
+        "pass": true
+      },
+      "2012-13": {
+        "min": 81,
+        "max": 82,
+        "avg": 81.9,
+        "expected": "81-82",
+        "pass": true
+      },
+      "2013-14": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2014-15": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2015-16": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2016-17": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2017-18": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2018-19": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2019-20": {
+        "min": 64,
+        "max": 75,
+        "avg": 70.6,
+        "expected": "64-75",
+        "pass": true
+      },
+      "2020-21": {
+        "min": 72,
+        "max": 72,
+        "avg": 72.0,
+        "expected": "72-72",
+        "pass": true
+      },
+      "2021-22": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      },
+      "2022-23": {
+        "min": 82,
+        "max": 82,
+        "avg": 82.0,
+        "expected": "82-82",
+        "pass": true
+      }
+    },
+    "Q4_winpct_validation": {
+      "out_of_range": 0,
+      "calc_mismatch": 0
+    },
+    "Q5_team_id_alignment": {
+      "csv_teams": 30,
+      "api_teams": 30,
+      "common": 30,
+      "only_csv": [],
+      "only_api": []
+    },
+    "Q6_missing_values": {
+      "null_columns": {}
+    },
+    "Q7_row_count": {
+      "rows": 773,
+      "expected": "754-780",
+      "pass": true
+    },
+    "summary": {
+      "total_checks": 7,
+      "passed": 7,
+      "failed": 0,
+      "failed_items": []
+    }
+  }
+}

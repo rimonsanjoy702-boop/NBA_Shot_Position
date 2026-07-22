@@ -34,7 +34,7 @@ import pandas as pd
 # 项目路径
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / "NBA Shot Locations 1997 - 2020.csv"
+DATA_DIR = PROJECT_ROOT / "Data_Source"
 SAMPLE_PATH = DATA_DIR / "data_sample_500.csv"
 FULL_PATH = DATA_DIR / "NBA Shot Locations 1997 - 2020.csv"
 OUTPUT_DIR = PROJECT_ROOT / "quality_check"

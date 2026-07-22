@@ -71,7 +71,7 @@ TIME_BIN_SECONDS = PERIOD_SECONDS // 2  # 360 seconds = 6 minutes
 
 # Paths
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / "NBA Shot Locations 1997 - 2020.csv"
+DATA_DIR = PROJECT_ROOT / "Data_Source"
 DATA_PATH = DATA_DIR / "NBA Shot Locations 1997 - 2020.csv"
 OUTPUT_DIR = PROJECT_ROOT / "public" / "data"
 
