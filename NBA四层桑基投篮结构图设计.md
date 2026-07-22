@@ -1,6 +1,6 @@
 # NBA 四层桑基投篮结构图设计
 
-> **版本**: v5  
+> **版本**: v6  
 > **最后更新**: 2026-07-22  
 > **关联文档**: [多视图交互与联动方案设计](./多视图交互与联动方案设计.md)、[NBA全联盟历年投篮分布桑基图设计](./NBA全联盟历年投篮分布桑基图设计.md)（v1，已废弃）、[Time-FG% 衰减曲线设计](./) 、[Hexbin 热力图设计](./)
 
@@ -317,13 +317,24 @@ interface SankeyNode {
 
 ### 6.4 连线记录
 
-存储在 `league.{side}.links`、`teams.{tid}.{side}.links`、`players.{pid}.{side}.links` 中。
+**JSON 存储格式（数组编码）**：为节省文件体积，JSON 中 link 使用三元素数组 `[source, target, value]` 而非对象。前端加载后解包为对象使用。
 
 ```typescript
+// JSON 中的原始格式
+type RawSankeyLink = [string, string, number];  // [source, target, value]
+
+// 前端加载后转换为对象
 interface SankeyLink {
   source: string;      // 源节点 id
   target: string;      // 目标节点 id
   value: number;       // 流量（出手次数）
+}
+```
+
+**前端解码**（sankey-data.ts）：
+```typescript
+function decodeLinks(raw: [string, string, number][]): SankeyLink[] {
+  return raw.map(([source, target, value]) => ({ source, target, value }))
 }
 ```
 
