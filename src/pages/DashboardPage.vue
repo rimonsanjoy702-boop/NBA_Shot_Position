@@ -158,7 +158,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="dashboard">
+  <div class="dashboard" @click.self="store.clearAll('canvas')">
     <div class="col col-left">
       <HexbinPage />
       <TimeFgChart />
