@@ -220,15 +220,15 @@ function classifyCellZone(cell: HexbinCell, side: 'left' | 'right'): ZoneId | nu
   if (y < 143 && Math.abs(x) <= PAINT_HALF_W && y <= PAINT_DEPTH) return 'L2_Paint'
 
   // Corner 3 — baseline extension cells (side-aware)
-  if (x === -225 && y <= 52) return side === 'left' ? 'L2_LC3' : 'L2_RC3'
-  if (x === +225 && y <= 52) return side === 'left' ? 'L2_RC3' : 'L2_LC3'
+  if (x === -225 && y <= 52) return side === 'left' ? 'L2_RC3' : 'L2_LC3'
+  if (x === +225 && y <= 52) return side === 'left' ? 'L2_LC3' : 'L2_RC3'
 
   const d = Math.sqrt(x * x + y * y)
   // Above the Break 3 — outside arc, between the two wing limits
   if (d > ARC_RADIUS && Math.abs(x) <= ARC_WING) return 'L2_AB3'
   // Corner 3 — outside arc, beyond wing limits (side-aware)
-  if (d > ARC_RADIUS && x < -ARC_WING) return side === 'left' ? 'L2_LC3' : 'L2_RC3'
-  if (d > ARC_RADIUS && x > +ARC_WING) return side === 'left' ? 'L2_RC3' : 'L2_LC3'
+  if (d > ARC_RADIUS && x < -ARC_WING) return side === 'left' ? 'L2_RC3' : 'L2_LC3'
+  if (d > ARC_RADIUS && x > +ARC_WING) return side === 'left' ? 'L2_LC3' : 'L2_RC3'
 
   // Mid-Range — everything inside the arc, not captured above
   return 'L2_MR'
