@@ -194,32 +194,40 @@ function cellMatchesZone(cell: HexbinCell, zoneId: string): boolean {
   const d = Math.sqrt(x * x + y * y)
 
   switch (zoneId) {
-    // Restricted Area: 4 ft radius around basket
+    // ── Restricted Area: 4 ft radius around basket ──
     case 'L2_RA':
       return d <= 40
 
-    // Paint (Non-RA): 16 ft wide × 19 ft deep, excluding RA
+    // ── Paint (Non-RA): 16 ft wide × 19 ft deep, excluding RA ──
+    //    Top 14 cells (y ≥ 143) are actually Mid-Range territory
     case 'L2_Paint':
-      return d > 40 && Math.abs(x) <= 80 && y <= 190
+      if (y >= 143) return false
+      return Math.abs(x) <= PAINT_HALF_W && y <= PAINT_DEPTH
 
-    // Mid-Range: inside the 3pt arc (d ≤ 237.5), excluding RA + Paint
+    // ── Mid-Range: inside the 3pt arc, excluding RA + Paint core ──
+    //    Includes the upper paint region (y ≥ 143) as intermediate-range floor area
     case 'L2_MR':
       if (d > ARC_RADIUS) return false
-      return !(d <= 40 || (Math.abs(x) <= 80 && y <= 190))
+      if (d <= 40) return false                     // RA
+      if (Math.abs(x) <= PAINT_HALF_W && y < 143) return false  // Paint core
+      return true
 
-    // Left Corner 3: outside arc, beyond the arc's sideline reach on the left
+    // ── Corner 3: outside arc region near the baseline-sideline corner ──
+    //    Includes baseline-adjacent cells at x = ±225 that are inside the arc
+    //    but belong to the corner 3 shooting zone
     case 'L2_LC3':
+      if (x === -225 && y <= 52) return true       // baseline corner extension
       return d > ARC_RADIUS && x < -ARC_WING
 
-    // Right Corner 3: outside arc, beyond the arc's sideline reach on the right
     case 'L2_RC3':
+      if (x === +225 && y <= 52) return true       // baseline corner extension
       return d > ARC_RADIUS && x > +ARC_WING
 
-    // Above the Break 3: outside arc, within the arc's wingspan
+    // ── Above the Break 3: outside arc, within the arc's sideline span ──
     case 'L2_AB3':
       return d > ARC_RADIUS && Math.abs(x) <= ARC_WING
 
-    // Backcourt: beyond half-court
+    // ── Backcourt: beyond half-court ──
     case 'L2_BC':
       return y > 470
 
