@@ -13,6 +13,7 @@
  */
 
 import { ref, computed, watch } from 'vue'
+import { useAnalysisContext } from '@/stores/analysisContext'
 import type {
   SankeyNode,
   SankeyLink,
@@ -86,10 +87,22 @@ const hoveredLink = ref<number | null>(null) // link index
 // ── Focus highlight mode ──
 const focusedNodeId = ref<string | null>(null)
 
+const store = useAnalysisContext()
+
 /** Clear focus highlight when data changes (season/scope switch) */
 watch(() => props.nodes, () => {
   focusedNodeId.value = null
 })
+
+/** Clear focus highlight when all selections are cleared (e.g. canvas click) */
+watch(
+  () => [store.selectedTimeBin, store.selectedZone, store.selectedAction, store.selectedOutcome],
+  ([bin, zone, action, outcome]) => {
+    if (bin === null && zone === null && action === null && outcome === null) {
+      focusedNodeId.value = null
+    }
+  },
+)
 
 // ═══════════════════════════════════════════════════════════
 // T3 — 衰减曲线点击 → 桑基 L1 对应节点高亮

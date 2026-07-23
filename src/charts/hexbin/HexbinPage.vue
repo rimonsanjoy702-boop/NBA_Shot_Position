@@ -396,7 +396,7 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
         xmlns="http://www.w3.org/2000/svg"
       >
         <!-- ═══════════════════ Floor background ═══════════════════ -->
-        <rect x="0" y="0" width="1100" height="600" fill="var(--bg-court-floor, #8c6239)" />
+        <rect x="0" y="0" width="1100" height="600" fill="var(--bg-court-floor, #8c6239)" @click="store.clearAll('canvas')" />
 
         <!-- ═══════════════════ Court outline (sidelines + baselines) ═══════════════════ -->
         <rect

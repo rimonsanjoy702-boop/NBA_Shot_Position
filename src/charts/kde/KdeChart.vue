@@ -1,7 +1,7 @@
 <template>
-  <div class="wrap">
+  <div class="wrap" @click.self="clearAllSelections">
     <!-- KDE主曲线图 -->
-    <div ref="kdeChartDom" class="chart-kde"></div>
+    <div ref="kdeChartDom" class="chart-kde" @click.stop="clearAllSelections"></div>
 
     <!-- 数据统计卡片 -->
     <div class="card-row">
@@ -45,13 +45,17 @@
     </div>
 
     <!-- 双峰指数柱状图 -->
-    <div ref="barChartDom" class="chart-bar"></div>
+    <div ref="barChartDom" class="chart-bar" @click.stop="clearAllSelections"></div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import * as echarts from "echarts";
+import { useAnalysisContext } from "@/stores/analysisContext";
+
+const store = useAnalysisContext();
+function clearAllSelections() { store.clearAll('canvas'); }
 
 const kdeChartDom = ref(null);
 const barChartDom = ref(null);

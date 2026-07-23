@@ -5,7 +5,7 @@
          ============================================================ -->
     <div class="chart-panel">
       <h3 class="chart-title">场均三分出手 3PA</h3>
-      <div ref="chart3PaDom" class="chart-svg"></div>
+      <div ref="chart3PaDom" class="chart-svg" @click="clearAllSelections"></div>
     </div>
 
     <!-- ============================================================
@@ -13,7 +13,7 @@
          ============================================================ -->
     <div class="chart-panel">
       <h3 class="chart-title">三分出手占比 3PAr</h3>
-      <div ref="chart3ParDom" class="chart-svg"></div>
+      <div ref="chart3ParDom" class="chart-svg" @click="clearAllSelections"></div>
     </div>
 
     <!-- ============================================================
@@ -21,7 +21,7 @@
          ============================================================ -->
     <div class="chart-panel">
       <h3 class="chart-title">常规赛胜率 WinPct</h3>
-      <div ref="chartWinDom" class="chart-svg"></div>
+      <div ref="chartWinDom" class="chart-svg" @click="clearAllSelections"></div>
     </div>
 
     <!-- ── 图例卡片 ── -->
@@ -60,6 +60,10 @@
 import { ref, watch, onMounted, onUnmounted, nextTick } from "vue";
 import * as d3 from "d3";
 import type { AggDataMap, GroupAggEntry } from "../store";
+import { useAnalysisContext } from "@/stores/analysisContext";
+
+const store = useAnalysisContext();
+function clearAllSelections() { store.clearAll('canvas'); }
 
 const props = defineProps<{
   aggData: AggDataMap;
