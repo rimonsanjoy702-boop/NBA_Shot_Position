@@ -207,45 +207,25 @@ function classifyCellZone(cell: HexbinCell, side: 'left' | 'right'): string | nu
   const { x, y } = cell
   const d = Math.sqrt(x * x + y * y)
 
-  // 1. Restricted Area — 4 ft radius circle around the basket
+  // 1. Restricted Area — 4 ft radius around basket
   if (d <= 40) return 'L2_RA'
 
-  // 2. Paint (Non-RA) — extends 19 ft (190 px) from baseline, 16 ft (160 px) wide,
-  //    excluding the top 14 cells (y ≥ 143) which are mid-range territory
-  if (y < 143 && Math.abs(x) <= 80 && y <= 190) return 'L2_Paint'
+  // 2. Paint core — exclude top cells (y ≥ 143 → Mid-Range)
+  if (y < 143 && Math.abs(x) <= PAINT_HALF_W && y <= PAINT_DEPTH) return 'L2_Paint'
 
-  // 3. Inside the 3pt arc → Mid-Range (including upper paint cells)
-  if (d <= ARC_RADIUS) return 'L2_MR'
-
-  // 4. Outside the 3pt arc
-  //    Corner 3 vs Above Break 3 depends on whether the cell is beyond the arc's
-  //    sideline reach (|x| > ARC_WING) or within it.
-  //
-  //    "Tight" corner 3 cells (|x| > ARC_WING AND d > ARC_RADIUS) —
-  //    only keep the CORNER3_TOP_K cells closest to baseline (lowest |y|).
-  //
-  //    BUT: the definition of LC3 vs RC3 depends on the side!
-  //      Left half:  LC3 = cell.y near own sideline (negative) vs RC3 = towards center (positive)
-  //      Right half: LC3 = towards center (positive, mirrored) vs RC3 = near own sideline (negative)
-  //
-  //    So for LEFT half:  L2_LC3 = x < -ARC_WING (towards left sideline)
-  //                       L2_RC3 = x > +ARC_WING (towards center — rarely applicable)
-  //    For RIGHT half:    L2_LC3 = x > +ARC_WING (towards center, mirrored to left screen)
-  //                       L2_RC3 = x < -ARC_WING (towards right sideline)
-  //
-  //    Since the hexbin cells are the same data for both halves, we classify based on
-  //    which sideline the cell is near (x < -ARC_WING = near own sideline,
-  //    x > +ARC_WING = towards center).
-  //    Then map to the zone name that makes sense for that half's basket.
-
-  if (d > ARC_RADIUS && x < -ARC_WING) {
-    // Near own sideline
+  // 3. Corner 3 candidates — |x| > ARC_WING (past the arc's sideline reach).
+  //    Includes baseline cells inside the arc (x=±225, y≤52, d≤237.5).
+  //    Only the top-K (closest to baseline by |y|) stay in corner 3;
+  //    the rest overflow to AB3.
+  if (x < -ARC_WING) {
     return side === 'left' ? 'L2_LC3' : 'L2_RC3'
   }
-  if (d > ARC_RADIUS && x > +ARC_WING) {
-    // Towards center court — only present on the right half (mirrored rendering)
+  if (x > +ARC_WING) {
     return side === 'left' ? 'L2_RC3' : 'L2_LC3'
   }
+
+  // 4. Inside the 3pt arc → Mid-Range (includes upper paint cells y≥143)
+  if (d <= ARC_RADIUS) return 'L2_MR'
 
   // 5. Above the Break 3 — outside arc, within sideline reach
   if (d > ARC_RADIUS && Math.abs(x) <= ARC_WING) return 'L2_AB3'
@@ -254,13 +234,7 @@ function classifyCellZone(cell: HexbinCell, side: 'left' | 'right'): string | nu
   if (y > 470) return 'L2_BC'
 
   return null
-}
-
-/**
- * For corner 3 zones, only keep cells closest to baseline.
- * Called from buildHexItems with the full cell list for a side.
- */
-function getCorner3TopK(cells: HexbinCell[], zoneId: string, side: 'left' | 'right', k: number): Set<string> {
+}function getCorner3TopK(cells: HexbinCell[], zoneId: string, side: 'left' | 'right', k: number): Set<string> {
   const cornerCells = cells.filter(c => classifyCellZone(c, side) === zoneId)
   cornerCells.sort((a, b) => Math.abs(a.y) - Math.abs(b.y))
   return new Set(cornerCells.slice(0, k).map(c => `${c.x},${c.y}`))
