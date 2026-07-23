@@ -179,28 +179,52 @@ function countToRadius(count: number, ext: { min: number; max: number }): number
 // ═══════════════════════════════════════════════════════════
 // Zone matching for S9 — §8.4 桑基 L2 → Hexbin 区域几何映射
 // cell.x / cell.y are in viewBox px (1ft=10px), relative to basket
+//
+// NBA 3pt arc: 23.75 ft radius = 237.5 px, from sideline to sideline
+//   Arc meets baseline at x=±220 (3 ft from each sideline)
+//   Corner 3 region: outside the arc beyond |x|>220 (sideline cutting)
+//   Above Break 3: outside the arc within |x|≤220
 // ═══════════════════════════════════════════════════════════
+
+const ARC_RADIUS = 237.5  // 3pt arc radius in viewBox px (23.75 ft × 10)
+const ARC_WING = 220     // where the 3pt arc meets the sideline: 250 - 30×2 = 250-30=220
 
 function cellMatchesZone(cell: HexbinCell, zoneId: string): boolean {
   const { x, y } = cell
   const d = Math.sqrt(x * x + y * y)
 
-  // Restricted Area: √(x²+y²) ≤ 40 (= 4ft × 10px/ft)
-  const inRA = d <= 40
-  // Paint (Non-RA): |x| ≤ 80 ∧ y ≤ 140, excluding RA
-  const inPaintNonRA = !inRA && Math.abs(x) <= 80 && y <= 140
-  // Mid-Range: everything inside the court, not RA/Paint, y ≤ 230
-  const inMid = !inRA && !inPaintNonRA && y <= 230
-
   switch (zoneId) {
-    case 'L2_RA':    return inRA
-    case 'L2_Paint': return inPaintNonRA
-    case 'L2_MR':    return inMid
-    case 'L2_LC3':   return y > 230 && x < -220
-    case 'L2_RC3':   return y > 230 && x > 220
-    case 'L2_AB3':   return y > 230 && Math.abs(x) <= 220
-    case 'L2_BC':    return y > 470
-    default:         return false
+    // Restricted Area: 4 ft radius around basket
+    case 'L2_RA':
+      return d <= 40
+
+    // Paint (Non-RA): 16 ft wide × 19 ft deep, excluding RA
+    case 'L2_Paint':
+      return d > 40 && Math.abs(x) <= 80 && y <= 190
+
+    // Mid-Range: inside the 3pt arc (d ≤ 237.5), excluding RA + Paint
+    case 'L2_MR':
+      if (d > ARC_RADIUS) return false
+      return !(d <= 40 || (Math.abs(x) <= 80 && y <= 190))
+
+    // Left Corner 3: outside arc, beyond the arc's sideline reach on the left
+    case 'L2_LC3':
+      return d > ARC_RADIUS && x < -ARC_WING
+
+    // Right Corner 3: outside arc, beyond the arc's sideline reach on the right
+    case 'L2_RC3':
+      return d > ARC_RADIUS && x > +ARC_WING
+
+    // Above the Break 3: outside arc, within the arc's wingspan
+    case 'L2_AB3':
+      return d > ARC_RADIUS && Math.abs(x) <= ARC_WING
+
+    // Backcourt: beyond half-court
+    case 'L2_BC':
+      return y > 470
+
+    default:
+      return false
   }
 }
 
