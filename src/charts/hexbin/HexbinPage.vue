@@ -239,11 +239,31 @@ type ZoneSets = Record<string, Set<string>>
 
 /** Build 7 zone sets from a flat cell array.  Runs once per data load. */
 function buildZoneSets(cells: HexbinCell[]): ZoneSets {
-  const sets: ZoneSets = Object.fromEntries(ZONE_IDS.map(id => [id, new Set<string>()]))
+  // Pass 1: classify all cells
+  const classified: { cell: HexbinCell; zone: ZoneId }[] = []
   for (const cell of cells) {
     const z = classifyCellZone(cell)
-    if (z) sets[z].add(cellKey(cell))
+    if (z) classified.push({ cell, zone: z })
   }
+
+  // Corner 3 top-8 filter: keep only 8 cells closest to baseline (smallest y),
+  // overflow moves to AB3
+  for (const cornerZone of ['L2_LC3', 'L2_RC3'] as const) {
+    const cornerCells = classified
+      .filter(c => c.zone === cornerZone)
+      .sort((a, b) => a.cell.y - b.cell.y)
+
+    for (const item of cornerCells.slice(8)) {
+      item.zone = 'L2_AB3'
+    }
+  }
+
+  // Pass 2: build final sets from (possibly reassigned) classifications
+  const sets: ZoneSets = Object.fromEntries(ZONE_IDS.map(id => [id, new Set<string>()]))
+  for (const { cell, zone } of classified) {
+    sets[zone].add(cellKey(cell))
+  }
+
   return sets
 }
 
