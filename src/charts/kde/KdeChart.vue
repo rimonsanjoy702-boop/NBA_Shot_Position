@@ -130,7 +130,7 @@ function render() {
     },
     tooltip: { trigger: "axis", backgroundColor: 'rgba(13,17,23,0.95)', borderColor: 'rgba(255,255,255,0.1)', textStyle: { color: '#e6edf3', fontSize: 13 } },
     title: { text: "NBA投篮距离KDE双峰演化", left: 10, top: 8, textStyle: { color: '#e6edf3' } },
-    grid: { left: 44, right: 20, top: 60, bottom: 65 },
+    grid: { left: 44, right: 60, top: 60, bottom: 65 },
     xAxis: {
       type: "value",
       name: "距离 ft",
