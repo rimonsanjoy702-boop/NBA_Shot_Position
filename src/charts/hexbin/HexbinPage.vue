@@ -201,8 +201,13 @@ const ZONE_IDS = [
 ] as const
 type ZoneId = (typeof ZONE_IDS)[number]
 
-/** Assign a single zone to one cell.  Rules in priority order, first match wins. */
-function classifyCellZone(cell: HexbinCell): ZoneId | null {
+/** Assign a single zone to one cell.  Rules in priority order, first match wins.
+ *
+ *  Side-aware: the left basket shoots to the right, so x=-225 → LC3 (shooter's left).
+ *  The right basket shoots to the left, so the left/right sense is flipped:
+ *  x=-225 → RC3 (shooter's right), x=+225 → LC3 (shooter's left).
+ */
+function classifyCellZone(cell: HexbinCell, side: 'left' | 'right'): ZoneId | null {
   const { x, y } = cell
 
   // Backcourt — beyond half-court
@@ -214,16 +219,16 @@ function classifyCellZone(cell: HexbinCell): ZoneId | null {
   // Paint (Non-RA) — 16 ft wide × 19 ft deep, excluding top 14 cells
   if (y < 143 && Math.abs(x) <= PAINT_HALF_W && y <= PAINT_DEPTH) return 'L2_Paint'
 
-  // Corner 3 — baseline extension cells + outside-arc wing area
-  if (x === -225 && y <= 52) return 'L2_LC3'
-  if (x === +225 && y <= 52) return 'L2_RC3'
+  // Corner 3 — baseline extension cells (side-aware)
+  if (x === -225 && y <= 52) return side === 'left' ? 'L2_LC3' : 'L2_RC3'
+  if (x === +225 && y <= 52) return side === 'left' ? 'L2_RC3' : 'L2_LC3'
 
   const d = Math.sqrt(x * x + y * y)
   // Above the Break 3 — outside arc, between the two wing limits
   if (d > ARC_RADIUS && Math.abs(x) <= ARC_WING) return 'L2_AB3'
-  // Corner 3 — outside arc, beyond wing limits
-  if (d > ARC_RADIUS && x < -ARC_WING) return 'L2_LC3'
-  if (d > ARC_RADIUS && x > +ARC_WING) return 'L2_RC3'
+  // Corner 3 — outside arc, beyond wing limits (side-aware)
+  if (d > ARC_RADIUS && x < -ARC_WING) return side === 'left' ? 'L2_LC3' : 'L2_RC3'
+  if (d > ARC_RADIUS && x > +ARC_WING) return side === 'left' ? 'L2_RC3' : 'L2_LC3'
 
   // Mid-Range — everything inside the arc, not captured above
   return 'L2_MR'
@@ -238,11 +243,11 @@ function cellKey(cell: HexbinCell): string {
 type ZoneSets = Record<string, Set<string>>
 
 /** Build 7 zone sets from a flat cell array.  Runs once per data load. */
-function buildZoneSets(cells: HexbinCell[]): ZoneSets {
-  // Pass 1: classify all cells
+function buildZoneSets(cells: HexbinCell[], side: 'left' | 'right'): ZoneSets {
+  // Pass 1: classify all cells (side-aware — LC3/RC3 swap per basket orientation)
   const classified: { cell: HexbinCell; zone: ZoneId }[] = []
   for (const cell of cells) {
-    const z = classifyCellZone(cell)
+    const z = classifyCellZone(cell, side)
     if (z) classified.push({ cell, zone: z })
   }
 
@@ -268,8 +273,8 @@ function buildZoneSets(cells: HexbinCell[]): ZoneSets {
 }
 
 // Pre-computed zone sets — invalidated when leftCells/rightCells change
-const leftZoneSets = computed(() => buildZoneSets(leftCells.value))
-const rightZoneSets = computed(() => buildZoneSets(rightCells.value))
+const leftZoneSets = computed(() => buildZoneSets(leftCells.value, 'left'))
+const rightZoneSets = computed(() => buildZoneSets(rightCells.value, 'right'))
 
 interface HexItem {
   key: string;
