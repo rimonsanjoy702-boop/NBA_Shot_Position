@@ -179,70 +179,59 @@ function countToRadius(count: number, ext: { min: number; max: number }): number
 // ═══════════════════════════════════════════════════════════
 // Zone matching for S9 — §8.4 桑基 L2 → Hexbin 区域几何映射
 //
-// cell.x / cell.y are in viewBox px (1ft=10px), relative to basket:
-//   cell.x = distance forward from basket along court (positive = down on screen)
-//   cell.y = horizontal from basket, positive = towards center court on both halves
+// Design doc table (cell.x=horizontal, cell.y=forward-from-baseline, 1ft=10px):
+//   Restricted Area      √(cell.x² + cell.y²) ≤ 40
+//   Paint (Non-RA)       |cell.x| ≤ 80 ∧ cell.y ≤ 140, not in RA
+//   Mid-Range             inside court, not in above, cell.y ≤ 230
+//   Left Corner 3         cell.y > 230 ∧ cell.x < -220
+//   Right Corner 3        cell.y > 230 ∧ cell.x > 220
+//   Above the Break 3     cell.y > 230 ∧ |cell.x| ≤ 220
+//   Backcourt             cell.y > 470
 //
-// Rendering (buildHexItems):
-//   left:  vx = L_BASKET_X + cell.y   (cell.y > 0 → screen right, towards center)
-//   right: vx = R_BASKET_X - cell.y   (cell.y > 0 → screen left,  towards center)
-//
-// Key insight: cell.y < 0 means "towards own sideline" for both halves.
-//   Left half:  negative cell.y → towards left sideline  (= L2_LC3)
-//   Right half: negative cell.y → towards right sideline (= L2_RC3)
-//   cell.y > 0 means towards center court for both halves.
+// Laterality: RIGHT half rendering mirrors (vx = R_BASKET - cell.y),
+// so LC3/RC3 swap at cell-data level.
 // ═══════════════════════════════════════════════════════════
 
-const ARC_RADIUS = 237.5  // 3pt arc radius in viewBox px (23.75 ft)
-const ARC_WING = 220      // where arc meets the straight sideline 3pt line
-
-/**
- * Classify a hexbin cell into one of 7 NBA shot zones.
- * Returns the L2 zone id, or null if unclassifiable.
- *
- * `side` is needed because L2_LC3 / L2_RC3 swap depending on which
- * half's basket the cell is relative to.
- */
-function classifyCellZone(cell: HexbinCell, side: 'left' | 'right'): string | null {
-  const { x, y } = cell
-  const d = Math.sqrt(x * x + y * y)
-
-  // 1. Restricted Area — 4 ft radius around basket
-  if (d <= 40) return 'L2_RA'
-
-  // 2. Paint core — exclude top cells (y ≥ 143 → Mid-Range)
-  if (y < 143 && Math.abs(x) <= PAINT_HALF_W && y <= PAINT_DEPTH) return 'L2_Paint'
-
-  // 3. Corner 3 candidates — |x| > ARC_WING (past the arc's sideline reach).
-  //    Includes baseline cells inside the arc (x=±225, y≤52, d≤237.5).
-  //    Only the top-K (closest to baseline by |y|) stay in corner 3;
-  //    the rest overflow to AB3.
-  if (x < -ARC_WING) {
-    return side === 'left' ? 'L2_LC3' : 'L2_RC3'
-  }
-  if (x > +ARC_WING) {
-    return side === 'left' ? 'L2_RC3' : 'L2_LC3'
-  }
-
-  // 4. Inside the 3pt arc → Mid-Range (includes upper paint cells y≥143)
-  if (d <= ARC_RADIUS) return 'L2_MR'
-
-  // 5. Above the Break 3 — outside arc, within sideline reach
-  if (d > ARC_RADIUS && Math.abs(x) <= ARC_WING) return 'L2_AB3'
-
-  // 6. Backcourt — beyond half-court
-  if (y > 470) return 'L2_BC'
-
-  return null
-}function getCorner3TopK(cells: HexbinCell[], zoneId: string, side: 'left' | 'right', k: number): Set<string> {
-  const cornerCells = cells.filter(c => classifyCellZone(c, side) === zoneId)
-  cornerCells.sort((a, b) => Math.abs(a.y) - Math.abs(b.y))
-  return new Set(cornerCells.slice(0, k).map(c => `${c.x},${c.y}`))
-}
+const RA_RADIUS = 40
 
 function cellMatchesZone(cell: HexbinCell, zoneId: string, side: 'left' | 'right'): boolean {
-  return classifyCellZone(cell, side) === zoneId
+  const { x, y } = cell   // x = horizontal (= design-doc X), y = forward (= design-doc Y)
+  const d = Math.sqrt(x * x + y * y)
+
+  switch (zoneId) {
+    case 'L2_RA':
+      return d <= RA_RADIUS
+
+    case 'L2_Paint':
+      if (d <= RA_RADIUS) return false
+      return Math.abs(x) <= 80 && y <= 140
+
+    case 'L2_MR':
+      if (d <= RA_RADIUS) return false
+      if (Math.abs(x) <= 80 && y <= 140) return false
+      return y <= 230
+
+    case 'L2_LC3':
+      if (y <= 230) return false
+      if (side === 'left') return x < -220
+      return x > +220
+
+    case 'L2_RC3':
+      if (y <= 230) return false
+      if (side === 'left') return x > +220
+      return x < -220
+
+    case 'L2_AB3':
+      return y > 230 && Math.abs(x) <= 220
+
+    case 'L2_BC':
+      return y > 470
+
+    default:
+      return false
+  }
 }
+
 
 interface HexItem {
   key: string;
@@ -261,13 +250,6 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
   const isActive = side === store.activeSide;
   const timeBin = store.selectedTimeBin;
   const zone = store.selectedZone;
-
-  // Pre-compute top-K corner 3 sets for this side
-  const corner3Sets: Record<string, Set<string>> = {}
-  if (zone === 'L2_LC3' || zone === 'L2_RC3') {
-    corner3Sets.LC3 = getCorner3TopK(cells, 'L2_LC3', side, CORNER3_TOP_K)
-    corner3Sets.LRC3 = getCorner3TopK(cells, 'L2_RC3', side, CORNER3_TOP_K)
-  }
 
   return cells
     .map(cell => {
@@ -293,7 +275,7 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
       // S9: zone selected → non-matching cells dim; matching cells always bright
       //     Only dim the side whose Sankey tab matches activeSide (one-sided dim)
       if (zone != null && isActive) {
-        dimmed = !cellMatchesZone(cell, zone, side, corner3Sets)
+        dimmed = !cellMatchesZone(cell, zone, side)
       }
 
       return { key: `${side}-${cell.x}-${cell.y}`, p: pts.join(' '), color, r, tip, dimmed };
