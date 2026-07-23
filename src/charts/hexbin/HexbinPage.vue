@@ -147,7 +147,9 @@ const THREE_TOP = COURT_T + THREE_SIDE;
 const THREE_BOT = COURT_B - THREE_SIDE;
 
 const PAINT_W = 160;
+const PAINT_HALF_W = 80;
 const PAINT_D = 190;
+const PAINT_DEPTH = 190;
 const PAINT_T = BASKET_Y - PAINT_W / 2;
 const PAINT_B = BASKET_Y + PAINT_W / 2;
 const L_PAINT_R = COURT_L + PAINT_D;
@@ -177,8 +179,12 @@ function countToRadius(count: number, ext: { min: number; max: number }): number
 }
 
 // ═══════════════════════════════════════════════════════════
-// Zone matching for S9 — §8.4 桑基 L2 → Hexbin 区域几何映射
+// Zone classification for S9 — §8.4 桑基 L2 → Hexbin 区域映射
 // cell.x / cell.y are in viewBox px (1ft=10px), relative to basket
+//
+// Strategy: pre-classify every cell into exactly one zone on data load,
+// store as 7 key-sets.  buildHexItems() then does O(1) Set lookup
+// instead of geometric computation per cell per render.
 //
 // NBA 3pt arc: 23.75 ft radius = 237.5 px, from sideline to sideline
 //   Arc meets baseline at x=±220 (3 ft from each sideline)
@@ -187,54 +193,63 @@ function countToRadius(count: number, ext: { min: number; max: number }): number
 // ═══════════════════════════════════════════════════════════
 
 const ARC_RADIUS = 237.5  // 3pt arc radius in viewBox px (23.75 ft × 10)
-const ARC_WING = 220     // where the 3pt arc meets the sideline: 250 - 30×2 = 250-30=220
+const ARC_WING = 220     // where the 3pt arc meets the sideline
 
-function cellMatchesZone(cell: HexbinCell, zoneId: string): boolean {
+/** Ordered list of L2 zone IDs — classification priority (first match wins). */
+const ZONE_IDS = [
+  'L2_BC', 'L2_RA', 'L2_Paint', 'L2_LC3', 'L2_RC3', 'L2_AB3', 'L2_MR',
+] as const
+type ZoneId = (typeof ZONE_IDS)[number]
+
+/** Assign a single zone to one cell.  Rules in priority order, first match wins. */
+function classifyCellZone(cell: HexbinCell): ZoneId | null {
   const { x, y } = cell
+
+  // Backcourt — beyond half-court
+  if (y > 470) return 'L2_BC'
+
+  // Restricted Area — 4 ft radius ring
+  if (Math.sqrt(x * x + y * y) <= 40) return 'L2_RA'
+
+  // Paint (Non-RA) — 16 ft wide × 19 ft deep, excluding top 14 cells
+  if (y < 143 && Math.abs(x) <= PAINT_HALF_W && y <= PAINT_DEPTH) return 'L2_Paint'
+
+  // Corner 3 — baseline extension cells + outside-arc wing area
+  if (x === -225 && y <= 52) return 'L2_LC3'
+  if (x === +225 && y <= 52) return 'L2_RC3'
+
   const d = Math.sqrt(x * x + y * y)
+  // Above the Break 3 — outside arc, between the two wing limits
+  if (d > ARC_RADIUS && Math.abs(x) <= ARC_WING) return 'L2_AB3'
+  // Corner 3 — outside arc, beyond wing limits
+  if (d > ARC_RADIUS && x < -ARC_WING) return 'L2_LC3'
+  if (d > ARC_RADIUS && x > +ARC_WING) return 'L2_RC3'
 
-  switch (zoneId) {
-    // ── Restricted Area: 4 ft radius around basket ──
-    case 'L2_RA':
-      return d <= 40
-
-    // ── Paint (Non-RA): 16 ft wide × 19 ft deep, excluding RA ──
-    //    Top 14 cells (y ≥ 143) are actually Mid-Range territory
-    case 'L2_Paint':
-      if (y >= 143) return false
-      return Math.abs(x) <= PAINT_HALF_W && y <= PAINT_DEPTH
-
-    // ── Mid-Range: inside the 3pt arc, excluding RA + Paint core ──
-    //    Includes the upper paint region (y ≥ 143) as intermediate-range floor area
-    case 'L2_MR':
-      if (d > ARC_RADIUS) return false
-      if (d <= 40) return false                     // RA
-      if (Math.abs(x) <= PAINT_HALF_W && y < 143) return false  // Paint core
-      return true
-
-    // ── Corner 3: outside arc region near the baseline-sideline corner ──
-    //    Includes baseline-adjacent cells at x = ±225 that are inside the arc
-    //    but belong to the corner 3 shooting zone
-    case 'L2_LC3':
-      if (x === -225 && y <= 52) return true       // baseline corner extension
-      return d > ARC_RADIUS && x < -ARC_WING
-
-    case 'L2_RC3':
-      if (x === +225 && y <= 52) return true       // baseline corner extension
-      return d > ARC_RADIUS && x > +ARC_WING
-
-    // ── Above the Break 3: outside arc, within the arc's sideline span ──
-    case 'L2_AB3':
-      return d > ARC_RADIUS && Math.abs(x) <= ARC_WING
-
-    // ── Backcourt: beyond half-court ──
-    case 'L2_BC':
-      return y > 470
-
-    default:
-      return false
-  }
+  // Mid-Range — everything inside the arc, not captured above
+  return 'L2_MR'
 }
+
+/** Cell key used as Set member: "x,y" */
+function cellKey(cell: HexbinCell): string {
+  return `${cell.x},${cell.y}`
+}
+
+/** Map of zone id → Set of cell keys belonging to that zone. */
+type ZoneSets = Record<string, Set<string>>
+
+/** Build 7 zone sets from a flat cell array.  Runs once per data load. */
+function buildZoneSets(cells: HexbinCell[]): ZoneSets {
+  const sets: ZoneSets = Object.fromEntries(ZONE_IDS.map(id => [id, new Set<string>()]))
+  for (const cell of cells) {
+    const z = classifyCellZone(cell)
+    if (z) sets[z].add(cellKey(cell))
+  }
+  return sets
+}
+
+// Pre-computed zone sets — invalidated when leftCells/rightCells change
+const leftZoneSets = computed(() => buildZoneSets(leftCells.value))
+const rightZoneSets = computed(() => buildZoneSets(rightCells.value))
 
 interface HexItem {
   key: string;
@@ -253,6 +268,9 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
   const isActive = side === store.activeSide;
   const timeBin = store.selectedTimeBin;
   const zone = store.selectedZone;
+
+  // S9: get the pre-computed set of matching cell keys for fast lookup
+  const zoneSet = zone ? (side === 'left' ? leftZoneSets : rightZoneSets).value[zone] : null
 
   return cells
     .map(cell => {
@@ -275,9 +293,9 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
         dimmed = true
       }
 
-      // S9: zone selected → non-matching cells dim; matching cells always bright
-      if (zone != null) {
-        dimmed = !cellMatchesZone(cell, zone)
+      // S9: zone selected → non-matching cells dim; O(1) Set lookup
+      if (zoneSet) {
+        dimmed = !zoneSet.has(cellKey(cell))
       }
 
       return { key: `${side}-${cell.x}-${cell.y}`, p: pts.join(' '), color, r, tip, dimmed };
