@@ -294,8 +294,9 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
   const timeBin = store.selectedTimeBin;
   const zone = store.selectedZone;
 
-  // S9: get the pre-computed set of matching cell keys for fast lookup
-  const zoneSet = zone ? (side === 'left' ? leftZoneSets : rightZoneSets).value[zone] : null
+  // S9: zone dimming only applies to the active side (the side whose sankey was clicked).
+  // The other side's hexbin is unaffected by this side's sankey interaction.
+  const zoneSet = (zone && isActive) ? (side === 'left' ? leftZoneSets : rightZoneSets).value[zone] : null
 
   return cells
     .map(cell => {
