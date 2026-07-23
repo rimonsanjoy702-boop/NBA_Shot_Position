@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, shallowRef } from 'vue'
 import { useAnalysisContext } from '@/stores/analysisContext'
+import PlayerCard from '@/components/LeBronCard.vue'
 import HexbinPage from '@/charts/hexbin/HexbinPage.vue'
 import KdeChart from '@/charts/kde/KdeChart.vue'
 import ThreePointCompareChart from '@/charts/three-point/components/ThreePointCompareChart.vue'
@@ -239,6 +240,9 @@ onMounted(async () => {
       </div>
     </div>
   </div>
+
+  <!-- 彩蛋：选中 LeBron James 时卡片动画 -->
+  <PlayerCard />
 </template>
 
 <style scoped>
