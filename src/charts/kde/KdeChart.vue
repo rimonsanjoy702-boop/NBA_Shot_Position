@@ -57,6 +57,29 @@ import { useAnalysisContext } from "@/stores/analysisContext";
 const store = useAnalysisContext();
 function clearAllSelections() { store.clearAll('canvas'); }
 
+// ── F: 桑基L2→KDE联动 — zone距离范围映射 ──
+const ZONE_DIST = {
+  'RA':  [0, 3], 'Paint': [3, 10], 'MR':   [10, 23],
+  'LC3': [22, 24], 'RC3':  [22, 24], 'AB3': [23, 26], 'BC': [26, 40],
+}
+const ZONE_COLOR = {
+  'RA': '#FFE84D', 'Paint': '#FFB800', 'MR': '#FF7A00',
+  'LC3': '#FF3300', 'RC3': '#E60000', 'AB3': '#B30005', 'BC': '#800008',
+}
+const hoverZone = ref(null)  // 当前悬停/选中的 zone key
+
+// 桑基L2点击 → 跳转赛季 + 色带
+watch(() => store.selectedZone, (zoneId) => {
+  if (!zoneId || !allData.value) { hoverZone.value = null; render(); return }
+  const zk = zoneId.replace('L2_', '')
+  hoverZone.value = ZONE_DIST[zk] ? zk : null
+  // 跳转到当前赛季
+  const s = store.selectedSeason
+  const idx = seasonList.value.findIndex((x) => x.season === s)
+  if (idx >= 0) index.value = idx
+  render()
+})
+
 const kdeChartDom = ref(null);
 const barChartDom = ref(null);
 let kdeChart = null;
@@ -132,7 +155,18 @@ function render() {
         type: "line",
         data: curr.curve.map(i => [i.dist, i.density]),
         lineStyle: { width: 3, color: "#e6edf3" },
-        symbol: "none"
+        symbol: "none",
+        ...(hoverZone.value && ZONE_DIST[hoverZone.value] ? {
+          markArea: {
+            silent: true,
+            data: [[{
+              xAxis: ZONE_DIST[hoverZone.value][0],
+              itemStyle: { color: ZONE_COLOR[hoverZone.value] || '#fff', opacity: 0.12 }
+            }, {
+              xAxis: ZONE_DIST[hoverZone.value][1]
+            }]]
+          }
+        } : {})
       }
     ]
   })
@@ -176,8 +210,13 @@ const reset = () => {
   index.value = 0;
 }
 
-// 切换赛季重绘
-watch(index, () => render())
+// 切换赛季重绘 + 同步到 Store
+watch(index, (i) => {
+  store.setKdeIndex(i, 'kde')
+  render()
+})
+// 播放状态同步到 Store
+watch(play, (v) => { v ? store.startAnimation() : store.stopAnimation() })
 
 onMounted(() => loadData())
 onUnmounted(() => {

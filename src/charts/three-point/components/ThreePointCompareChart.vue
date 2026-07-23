@@ -457,31 +457,7 @@ function drawChart(
 // Watcher — redraw all 3 charts when data or showMid changes
 // ==========================================================================
 
-watch(
-  () => [props.aggData, props.seasons] as const,
-  async ([aggData, seasons]) => {
-    if (!aggData || Object.keys(aggData).length === 0) return;
-    await nextTick();
-
-    if (chart3PaDom.value) {
-      drawChart(chart3PaDom.value, seasons, aggData, false, "avg_3pa", Y_RANGES["3pa"]);
-    }
-    if (chart3ParDom.value) {
-      drawChart(chart3ParDom.value, seasons, aggData, false, "avg_3par", Y_RANGES["3par"]);
-    }
-    if (chartWinDom.value) {
-      drawChart(chartWinDom.value, seasons, aggData, false, "avg_win_pct", Y_RANGES["win"]);
-    }
-  },
-  { immediate: false },
-);
-
-// Initial draw
-onMounted(async () => {
-  await nextTick();
-  const { aggData, seasons } = props;
-  if (!aggData || Object.keys(aggData).length === 0) return;
-
+function drawAllCharts(aggData: AggDataMap, seasons: string[]) {
   if (chart3PaDom.value) {
     drawChart(chart3PaDom.value, seasons, aggData, false, "avg_3pa", Y_RANGES["3pa"]);
   }
@@ -491,12 +467,87 @@ onMounted(async () => {
   if (chartWinDom.value) {
     drawChart(chartWinDom.value, seasons, aggData, false, "avg_win_pct", Y_RANGES["win"]);
   }
+  drawKdeCursor()
+}
+
+watch(
+  () => [props.aggData, props.seasons] as const,
+  async ([aggData, seasons]) => {
+    if (!aggData || Object.keys(aggData).length === 0) return;
+    await nextTick();
+    drawAllCharts(aggData, seasons)
+  },
+  { immediate: false },
+);
+
+// ── G: KDE→三分竖虚线 ──
+const KDE_CURSOR_COLOR = '#f39c12'
+function getSeasonX(container: HTMLDivElement | null, season: string): number | null {
+  if (!container) return null
+  const svg = container.querySelector('svg')
+  if (!svg) return null
+  const g = svg.querySelector('g')
+  if (!g) return null
+  const xScale = d3.scalePoint<string>()
+    .domain(props.seasons)
+    .range([0, PLOT_W])
+    .padding(0.5)
+  const vx = xScale(season)
+  return vx ?? null
+}
+
+let _kdeTimer: ReturnType<typeof setInterval> | null = null
+function drawKdeCursor() {
+  if (!store.isKdeAnimating) {
+    // 移除所有虚线
+    ;[chart3PaDom.value, chart3ParDom.value, chart3WinDom.value].forEach(c => {
+      c?.querySelectorAll('.kde-cursor-line').forEach(l => l.remove())
+    })
+    if (_kdeTimer) { clearInterval(_kdeTimer); _kdeTimer = null }
+    return
+  }
+
+  function _draw() {
+    const season = props.seasons[store.kdeCurrentIndex] || props.seasons[props.seasons.length - 1]
+    ;[chart3PaDom.value, chart3ParDom.value, chart3WinDom.value].forEach(c => {
+      if (!c) return
+      c.querySelectorAll('.kde-cursor-line').forEach(l => l.remove())
+      const svg = c.querySelector('svg')
+      const g = svg?.querySelector('g')
+      if (!g) return
+      const vx = getSeasonX(c, season)
+      if (vx == null) return
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+      line.setAttribute('x1', String(vx)); line.setAttribute('x2', String(vx))
+      line.setAttribute('y1', '0'); line.setAttribute('y2', String(PLOT_H))
+      line.setAttribute('stroke', KDE_CURSOR_COLOR)
+      line.setAttribute('stroke-width', '2.5')
+      line.setAttribute('stroke-dasharray', '8,4')
+      line.setAttribute('opacity', '0.85')
+      line.classList.add('kde-cursor-line')
+      g.appendChild(line)
+    })
+  }
+  _draw()
+  _kdeTimer = setInterval(_draw, 100)
+}
+
+watch(() => [store.isKdeAnimating, store.kdeCurrentIndex] as const, () => {
+  drawKdeCursor()
+})
+
+// Initial draw
+onMounted(async () => {
+  await nextTick();
+  const { aggData, seasons } = props;
+  if (!aggData || Object.keys(aggData).length === 0) return;
+  drawAllCharts(aggData, seasons)
 });
 
+
 onUnmounted(() => {
-  // D3 selections are scoped to container DOM which Vue removes,
-  // but clear any remaining listeners
-  [chart3PaDom, chart3ParDom, chartWinDom].forEach((d) => {
+  if (_kdeTimer) { clearInterval(_kdeTimer); _kdeTimer = null }
+  [chart3PaDom, chart3ParDom, chart3WinDom].forEach((d) => {
     if (d.value) d.value.innerHTML = "";
   });
 });
