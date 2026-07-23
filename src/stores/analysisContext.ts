@@ -1,81 +1,139 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
+// ═══════════════════════════════════════════════════════════
+// Data slot — one independent data context (season + entity)
+// ═══════════════════════════════════════════════════════════
+
+export interface DataSlot {
+  season: string                          // "2019-20"
+  scope: 'league' | 'team' | 'player'
+  entityId?: number
+  entityLabel?: string
+}
+
 export const useAnalysisContext = defineStore('analysisContext', () => {
-  // ═══ 跨页共享 ═══
-  const selectedSeason = ref<string>('2019-20')
-  const selectedTeamId = ref<number | null>(null)
-  const selectedTeamName = ref<string | null>(null)
-  const selectedPlayerId = ref<number | null>(null)
-  const selectedPlayerName = ref<string | null>(null)
+  // ═══ 左右数据槽（黄金三角共享） ═══
+  const leftSlot = ref<DataSlot>({ season: '2019-20', scope: 'league' })
+  const rightSlot = ref<DataSlot>({ season: '2019-20', scope: 'league' })
 
-  // ═══ Page1 专属: 空间探索 ═══
+  /** Which side receives time-bin click effects from decay-curve / sankey L1 */
+  const activeSide = ref<'left' | 'right'>('left')
+
+  // ═══ 时间 Bin 选中 ═══
+  /** null = 全时段, 0-7 = 具体时段 (Q1前~Q4后) */
   const selectedTimeBin = ref<number | null>(null)
-  const timeLinkMode = ref<'sync' | 'independent'>('sync')
 
-  // ═══ Page2 专属: 演化趋势 ═══
+  // ═══ 桑基图选中状态 ═══
+  const selectedZone = ref<string | null>(null)       // L2 区域 id, e.g. "L2_AB3"
+  const selectedAction = ref<string | null>(null)     // L3 出手方式 id, e.g. "L3_Jump"
+  const selectedOutcome = ref<string | null>(null)    // L4 结果 id, e.g. "L4_Made"
+
+  // ═══ KDE 动画状态 ═══
   const isKdeAnimating = ref(false)
-  const kdeCurrentIndex = ref(22)
+  const kdeCurrentIndex = ref(22)  // default: last season
   const playSpeed = ref(1)
-
-  // ═══ Page3 专属: 投篮结构 ═══
-  const selectedZone = ref<string | null>(null)
-  const selectedShotType = ref<'2PT' | '3PT' | null>(null)
 
   // ═══ 联动追踪 ═══
   const lastChangeSource = ref<string>('init')
 
-  // ═══ 当前实体标签 ═══
+  // ═══════════════════════════════════════════════════════════
+  // Derived — convenience accessors for legacy consumers
+  // ═══════════════════════════════════════════════════════════
+
+  /** Slot for the currently active side */
+  const activeSlot = computed(() =>
+    activeSide.value === 'left' ? leftSlot.value : rightSlot.value
+  )
+
+  /** Current season from active slot (used by GlobalNavBar) */
+  const selectedSeason = computed(() => activeSlot.value.season)
+
+  /** Entity label from active slot (used by GlobalNavBar) */
   const entityLabel = computed(() => {
-    if (selectedPlayerName.value) return { text: selectedPlayerName.value, type: 'player' as const }
-    if (selectedTeamName.value) return { text: selectedTeamName.value, type: 'team' as const }
+    const slot = activeSlot.value
+    if (slot.entityLabel) {
+      return {
+        text: slot.entityLabel,
+        type: slot.scope === 'player' ? 'player' as const : 'team' as const,
+      }
+    }
     return { text: '联盟平均', type: 'league' as const }
   })
 
-  // ═══ Actions ═══
-  function setSeason(season: string, source: string) {
+  // ═══════════════════════════════════════════════════════════
+  // Actions — Slot management
+  // ═══════════════════════════════════════════════════════════
+
+  function setSlot(side: 'left' | 'right', patch: Partial<DataSlot>, source: string) {
     lastChangeSource.value = source
-    selectedSeason.value = season
+    if (side === 'left') {
+      leftSlot.value = { ...leftSlot.value, ...patch }
+    } else {
+      rightSlot.value = { ...rightSlot.value, ...patch }
+    }
   }
 
-  function setTeam(teamId: number, teamName: string, source: string) {
+  function setActiveSide(side: 'left' | 'right', source: string) {
     lastChangeSource.value = source
-    selectedTeamId.value = teamId
-    selectedTeamName.value = teamName
-    selectedPlayerId.value = null
-    selectedPlayerName.value = null
+    activeSide.value = side
   }
 
-  function setPlayer(playerId: number, playerName: string, source: string) {
-    lastChangeSource.value = source
-    selectedPlayerId.value = playerId
-    selectedPlayerName.value = playerName
-    selectedTeamId.value = null
-    selectedTeamName.value = null
-  }
-
-  function clearEntity(source: string) {
-    lastChangeSource.value = source
-    selectedTeamId.value = null
-    selectedTeamName.value = null
-    selectedPlayerId.value = null
-    selectedPlayerName.value = null
-  }
+  // ═══════════════════════════════════════════════════════════
+  // Actions — Time bin
+  // ═══════════════════════════════════════════════════════════
 
   function setTimeBin(bin: number | null, source: string) {
     lastChangeSource.value = source
-    selectedTimeBin.value = bin
+    selectedTimeBin.value = selectedTimeBin.value === bin ? null : bin
   }
+
+  function clearTimeBin(source: string) {
+    lastChangeSource.value = source
+    selectedTimeBin.value = null
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Actions — Sankey selections
+  // ═══════════════════════════════════════════════════════════
 
   function setZone(zone: string | null, source: string) {
     lastChangeSource.value = source
-    selectedZone.value = zone
+    selectedZone.value = selectedZone.value === zone ? null : zone
   }
 
-  function setShotType(type: '2PT' | '3PT' | null, source: string) {
+  function setAction(action: string | null, source: string) {
     lastChangeSource.value = source
-    selectedShotType.value = type
+    selectedAction.value = selectedAction.value === action ? null : action
   }
+
+  function setOutcome(outcome: string | null, source: string) {
+    lastChangeSource.value = source
+    selectedOutcome.value = selectedOutcome.value === outcome ? null : outcome
+  }
+
+  function clearSankeySelections(source: string) {
+    lastChangeSource.value = source
+    selectedZone.value = null
+    selectedAction.value = null
+    selectedOutcome.value = null
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Actions — All clear
+  // ═══════════════════════════════════════════════════════════
+
+  function clearAll(source: string) {
+    lastChangeSource.value = source
+    selectedTimeBin.value = null
+    selectedZone.value = null
+    selectedAction.value = null
+    selectedOutcome.value = null
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Actions — KDE
+  // ═══════════════════════════════════════════════════════════
 
   function setKdeIndex(index: number, source: string) {
     lastChangeSource.value = source
@@ -86,14 +144,23 @@ export const useAnalysisContext = defineStore('analysisContext', () => {
   function stopAnimation() { isKdeAnimating.value = false }
 
   return {
-    selectedSeason, selectedTeamId, selectedTeamName,
-    selectedPlayerId, selectedPlayerName,
-    selectedTimeBin, timeLinkMode,
+    // Slots
+    leftSlot, rightSlot, activeSide, activeSlot,
+    // Time bin
+    selectedTimeBin,
+    // Sankey selections
+    selectedZone, selectedAction, selectedOutcome,
+    // KDE
     isKdeAnimating, kdeCurrentIndex, playSpeed,
-    selectedZone, selectedShotType,
-    lastChangeSource, entityLabel,
-    setSeason, setTeam, setPlayer, clearEntity,
-    setTimeBin, setZone, setShotType, setKdeIndex,
-    startAnimation, stopAnimation,
+    // Tracking
+    lastChangeSource,
+    // Derived (legacy)
+    selectedSeason, entityLabel,
+    // Actions
+    setSlot, setActiveSide,
+    setTimeBin, clearTimeBin,
+    setZone, setAction, setOutcome,
+    clearSankeySelections, clearAll,
+    setKdeIndex, startAnimation, stopAnimation,
   }
 })

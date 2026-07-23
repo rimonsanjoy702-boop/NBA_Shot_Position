@@ -10,10 +10,13 @@
  * All layers (floor + lines + hexbins) share ONE SVG for perfect alignment.
  */
 import { ref, computed, watch } from 'vue';
+import { useAnalysisContext, type DataSlot } from '@/stores/analysisContext';
 import type { HalfCourtSelection, HexbinCell } from './types';
 import { ALL_SEASONS } from './types';
 import { fetchHexbinSeason, extractHexbins, getAvailableTeams, getAvailablePlayers } from './hexbin-data';
 import { fgPctColorClassic } from './fgPctColorClassic';
+
+const store = useAnalysisContext();
 
 // ═══════════════════════════════════════════════════════════
 // State
@@ -25,8 +28,9 @@ const pageState = ref<PageState>('loading');
 const errorMessage = ref('');
 const errorDetail = ref('');
 
-const leftSelection = ref<HalfCourtSelection>({ scope: 'league', season: '2018-19' });
-const rightSelection = ref<HalfCourtSelection>({ scope: 'league', season: '2018-19' });
+// Derived from Store slots (source of truth for golden triangle sync)
+const leftSelection = computed<HalfCourtSelection>(() => toSelection(store.leftSlot));
+const rightSelection = computed<HalfCourtSelection>(() => toSelection(store.rightSlot));
 const leftCells = ref<HexbinCell[]>([]);
 const rightCells = ref<HexbinCell[]>([]);
 const leftTeams = ref<{ id: number; name: string; abbr: string }[]>([]);
@@ -34,6 +38,10 @@ const rightTeams = ref<{ id: number; name: string; abbr: string }[]>([]);
 const leftPlayers = ref<{ id: number; name: string }[]>([]);
 const rightPlayers = ref<{ id: number; name: string }[]>([]);
 const seasonCache = ref<Map<string, any>>(new Map());
+
+function toSelection(slot: DataSlot): HalfCourtSelection {
+  return { scope: slot.scope, season: slot.season, entityId: slot.entityId, entityLabel: slot.entityLabel };
+}
 
 // ═══════════════════════════════════════════════════════════
 // Data loading
@@ -49,14 +57,16 @@ async function loadSeason(season: string): Promise<any> {
 async function refreshSide(side: 'left' | 'right') {
   const sel = side === 'left' ? leftSelection.value : rightSelection.value;
   const data = await loadSeason(sel.season);
+  // S6: only active side gets time-filtered — inactive side shows full data (visually dimmed)
+  const timeBin = (side === store.activeSide) ? store.selectedTimeBin : null;
   if (side === 'left') {
     leftTeams.value = getAvailableTeams(data);
     leftPlayers.value = getAvailablePlayers(data);
-    leftCells.value = extractHexbins(data, sel.scope, sel.entityId);
+    leftCells.value = extractHexbins(data, sel.scope, sel.entityId, timeBin);
   } else {
     rightTeams.value = getAvailableTeams(data);
     rightPlayers.value = getAvailablePlayers(data);
-    rightCells.value = extractHexbins(data, sel.scope, sel.entityId);
+    rightCells.value = extractHexbins(data, sel.scope, sel.entityId, timeBin);
   }
 }
 
@@ -74,8 +84,13 @@ async function refreshAll() {
   }
 }
 
-watch(leftSelection, () => refreshSide('left'), { deep: true });
-watch(rightSelection, () => refreshSide('right'), { deep: true });
+// Watch time bin changes → re-extract with time filter (S6, T1)
+watch(() => store.selectedTimeBin, () => refreshAll());
+// Watch activeSide changes → re-extract to apply per-side time-filter / dim rules
+watch(() => store.activeSide, () => refreshAll());
+
+watch(() => store.leftSlot, () => refreshSide('left'), { deep: true });
+watch(() => store.rightSlot, () => refreshSide('right'), { deep: true });
 
 refreshAll();
 
@@ -91,20 +106,17 @@ function entityChoices(side: 'left' | 'right') {
 }
 
 function onScopeChange(side: 'left' | 'right', scope: 'league' | 'team' | 'player') {
-  const ref_ = side === 'left' ? leftSelection : rightSelection;
-  ref_.value = { ...ref_.value, scope, entityId: undefined };
+  store.setSlot(side, { scope, entityId: undefined, entityLabel: undefined }, 'hexbin');
 }
 
 function onEntityChange(side: 'left' | 'right', id: number) {
-  const ref_ = side === 'left' ? leftSelection : rightSelection;
   const entities = entityChoices(side);
   const entity = entities.find((e: any) => e.id === id);
-  ref_.value = { ...ref_.value, entityId: id, entityLabel: entity?.name };
+  store.setSlot(side, { entityId: id, entityLabel: entity?.name }, 'hexbin');
 }
 
 function onSeasonChange(side: 'left' | 'right', season: string) {
-  const ref_ = side === 'left' ? leftSelection : rightSelection;
-  ref_.value = { ...ref_.value, season };
+  store.setSlot(side, { season }, 'hexbin');
 }
 
 const layerLoading = computed(() => pageState.value === 'loading');
@@ -135,7 +147,9 @@ const THREE_TOP = COURT_T + THREE_SIDE;
 const THREE_BOT = COURT_B - THREE_SIDE;
 
 const PAINT_W = 160;
+const PAINT_HALF_W = 80;
 const PAINT_D = 190;
+const PAINT_DEPTH = 190;
 const PAINT_T = BASKET_Y - PAINT_W / 2;
 const PAINT_B = BASKET_Y + PAINT_W / 2;
 const L_PAINT_R = COURT_L + PAINT_D;
@@ -164,12 +178,111 @@ function countToRadius(count: number, ext: { min: number; max: number }): number
   return SIZE_MIN + t * (SIZE_MAX - SIZE_MIN);
 }
 
+// ═══════════════════════════════════════════════════════════
+// Zone classification for S9 — §8.4 桑基 L2 → Hexbin 区域映射
+// cell.x / cell.y are in viewBox px (1ft=10px), relative to basket
+//
+// Strategy: pre-classify every cell into exactly one zone on data load,
+// store as 7 key-sets.  buildHexItems() then does O(1) Set lookup
+// instead of geometric computation per cell per render.
+//
+// NBA 3pt arc: 23.75 ft radius = 237.5 px, from sideline to sideline
+//   Arc meets baseline at x=±220 (3 ft from each sideline)
+//   Corner 3 region: outside the arc beyond |x|>220 (sideline cutting)
+//   Above Break 3: outside the arc within |x|≤220
+// ═══════════════════════════════════════════════════════════
+
+const ARC_RADIUS = 237.5  // 3pt arc radius in viewBox px (23.75 ft × 10)
+const ARC_WING = 220     // where the 3pt arc meets the sideline
+
+/** Ordered list of L2 zone IDs — classification priority (first match wins). */
+const ZONE_IDS = [
+  'L2_BC', 'L2_RA', 'L2_Paint', 'L2_LC3', 'L2_RC3', 'L2_AB3', 'L2_MR',
+] as const
+type ZoneId = (typeof ZONE_IDS)[number]
+
+/** Assign a single zone to one cell.  Rules in priority order, first match wins.
+ *
+ *  Side-aware: the left basket shoots to the right, so x=-225 → LC3 (shooter's left).
+ *  The right basket shoots to the left, so the left/right sense is flipped:
+ *  x=-225 → RC3 (shooter's right), x=+225 → LC3 (shooter's left).
+ */
+function classifyCellZone(cell: HexbinCell, side: 'left' | 'right'): ZoneId | null {
+  const { x, y } = cell
+
+  // Backcourt — beyond half-court
+  if (y > 470) return 'L2_BC'
+
+  // Restricted Area — 4 ft radius ring
+  if (Math.sqrt(x * x + y * y) <= 40) return 'L2_RA'
+
+  // Paint (Non-RA) — 16 ft wide × 19 ft deep, excluding top 14 cells
+  if (y < 143 && Math.abs(x) <= PAINT_HALF_W && y <= PAINT_DEPTH) return 'L2_Paint'
+
+  // Corner 3 — baseline extension cells (side-aware)
+  if (x === -225 && y <= 52) return side === 'left' ? 'L2_RC3' : 'L2_LC3'
+  if (x === +225 && y <= 52) return side === 'left' ? 'L2_LC3' : 'L2_RC3'
+
+  const d = Math.sqrt(x * x + y * y)
+  // Above the Break 3 — outside arc, between the two wing limits
+  if (d > ARC_RADIUS && Math.abs(x) <= ARC_WING) return 'L2_AB3'
+  // Corner 3 — outside arc, beyond wing limits (side-aware)
+  if (d > ARC_RADIUS && x < -ARC_WING) return side === 'left' ? 'L2_RC3' : 'L2_LC3'
+  if (d > ARC_RADIUS && x > +ARC_WING) return side === 'left' ? 'L2_LC3' : 'L2_RC3'
+
+  // Mid-Range — everything inside the arc, not captured above
+  return 'L2_MR'
+}
+
+/** Cell key used as Set member: "x,y" */
+function cellKey(cell: HexbinCell): string {
+  return `${cell.x},${cell.y}`
+}
+
+/** Map of zone id → Set of cell keys belonging to that zone. */
+type ZoneSets = Record<string, Set<string>>
+
+/** Build 7 zone sets from a flat cell array.  Runs once per data load. */
+function buildZoneSets(cells: HexbinCell[], side: 'left' | 'right'): ZoneSets {
+  // Pass 1: classify all cells (side-aware — LC3/RC3 swap per basket orientation)
+  const classified: { cell: HexbinCell; zone: ZoneId }[] = []
+  for (const cell of cells) {
+    const z = classifyCellZone(cell, side)
+    if (z) classified.push({ cell, zone: z })
+  }
+
+  // Corner 3 top-8 filter: keep only 8 cells closest to baseline (smallest y),
+  // overflow moves to AB3
+  for (const cornerZone of ['L2_LC3', 'L2_RC3'] as const) {
+    const cornerCells = classified
+      .filter(c => c.zone === cornerZone)
+      .sort((a, b) => a.cell.y - b.cell.y)
+
+    for (const item of cornerCells.slice(8)) {
+      item.zone = 'L2_AB3'
+    }
+  }
+
+  // Pass 2: build final sets from (possibly reassigned) classifications
+  const sets: ZoneSets = Object.fromEntries(ZONE_IDS.map(id => [id, new Set<string>()]))
+  for (const { cell, zone } of classified) {
+    sets[zone].add(cellKey(cell))
+  }
+
+  return sets
+}
+
+// Pre-computed zone sets — invalidated when leftCells/rightCells change
+const leftZoneSets = computed(() => buildZoneSets(leftCells.value, 'left'))
+const rightZoneSets = computed(() => buildZoneSets(rightCells.value, 'right'))
+
 interface HexItem {
   key: string;
   p: string;
   color: string;
   r: number;
   tip: string;
+  dimmed: boolean;
 }
 
 const leftHexItems = computed<HexItem[]>(() => buildHexItems(leftCells.value, 'left'));
@@ -177,6 +290,14 @@ const rightHexItems = computed<HexItem[]>(() => buildHexItems(rightCells.value, 
 
 function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
   const ext = countExt(cells);
+  const isActive = side === store.activeSide;
+  const timeBin = store.selectedTimeBin;
+  const zone = store.selectedZone;
+
+  // S9: zone dimming only applies to the active side (the side whose sankey was clicked).
+  // The other side's hexbin is unaffected by this side's sankey interaction.
+  const zoneSet = (zone && isActive) ? (side === 'left' ? leftZoneSets : rightZoneSets).value[zone] : null
+
   return cells
     .map(cell => {
       const vx = side === 'left' ? L_BASKET_X + cell.y : R_BASKET_X - cell.y;
@@ -189,7 +310,21 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
         const a = (Math.PI / 180) * (60 * i - 30);
         pts.push(`${(vx + r * Math.cos(a)).toFixed(2)},${(vy + r * Math.sin(a)).toFixed(2)}`);
       }
-      return { key: `${side}-${cell.x}-${cell.y}`, p: pts.join(' '), color, r, tip };
+
+      // ── Per-cell dimming rules (S6 + S9) ──
+      let dimmed = false
+
+      // S6: time bin selected → inactive side dims (active side shows filtered data)
+      if (timeBin != null && !isActive) {
+        dimmed = true
+      }
+
+      // S9: zone selected → non-matching cells dim; O(1) Set lookup
+      if (zoneSet) {
+        dimmed = !zoneSet.has(cellKey(cell))
+      }
+
+      return { key: `${side}-${cell.x}-${cell.y}`, p: pts.join(' '), color, r, tip, dimmed };
     })
     .sort((a, b) => b.r - a.r);
 }
@@ -313,6 +448,13 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
 
         <!-- ═══════════════════ HEXBIN OVERLAYS ═══════════════════ -->
         <defs>
+          <!-- S9 dim filter — desaturate + low opacity for non-matching cells -->
+          <filter id="hex-dim-filter">
+            <feColorMatrix type="saturate" values="0.08" />
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.35" />
+            </feComponentTransfer>
+          </filter>
           <clipPath id="clip-left">
             <rect :x="COURT_L" :y="COURT_T" :width="MIDCOURT_X - COURT_L" :height="COURT_B - COURT_T" />
           </clipPath>
@@ -324,16 +466,26 @@ function buildHexItems(cells: HexbinCell[], side: 'left' | 'right'): HexItem[] {
         <!-- Left hexbins -->
         <g v-if="leftCells.length > 0 && !layerLoading" clip-path="url(#clip-left)">
           <g v-for="h in leftHexItems" :key="h.key" class="hex-cell">
-            <title>{{ h.tip }}</title>
-            <polygon :points="h.p" :fill="h.color" opacity="0.8" />
+            <title>{{ h.tip }}{{ h.dimmed ? ' [dim]' : '' }}</title>
+            <polygon
+              :points="h.p"
+              :fill="h.color"
+              :opacity="h.dimmed ? 0.2 : 0.8"
+              :filter="h.dimmed ? 'url(#hex-dim-filter)' : undefined"
+            />
           </g>
         </g>
 
         <!-- Right hexbins -->
         <g v-if="rightCells.length > 0 && !layerLoading" clip-path="url(#clip-right)">
           <g v-for="h in rightHexItems" :key="h.key" class="hex-cell">
-            <title>{{ h.tip }}</title>
-            <polygon :points="h.p" :fill="h.color" opacity="0.8" />
+            <title>{{ h.tip }}{{ h.dimmed ? ' [dim]' : '' }}</title>
+            <polygon
+              :points="h.p"
+              :fill="h.color"
+              :opacity="h.dimmed ? 0.2 : 0.8"
+              :filter="h.dimmed ? 'url(#hex-dim-filter)' : undefined"
+            />
           </g>
         </g>
       </svg>
